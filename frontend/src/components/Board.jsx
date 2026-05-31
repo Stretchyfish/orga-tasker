@@ -3,7 +3,7 @@ import Swimlane from './Swimlane'
 import AddTagForm from './AddTagForm'
 import SwimlaneSelector from './SwimlaneSelector'
 
-function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onToggleUntagged, onOpenTicket }) {
+function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onOpenTicket }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDesc, setEditingDesc] = useState(false)
@@ -12,6 +12,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
   const [dateDraft, setDateDraft] = useState('')
   const [showTagDropdown, setShowTagDropdown] = useState(false)
   const [ticketProgress, setTicketProgress] = useState({})
+  const [draggedSwimlaneId, setDraggedSwimlaneId] = useState(null)
 
   function startEditingTitle() {
     setTitleDraft(parentTicket.label)
@@ -240,10 +241,11 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
         ))}
       </div>
 
-      {swimlaneTags.map(tag => (
+      {swimlaneTags.map((tag, index) => (
         <Swimlane
           key={tag.id}
           tag={tag}
+          swimlaneIndex={index}
           columns={columns}
           tickets={tickets.filter(t => t.tags.includes(tag.name))}
           allTags={allTags}
@@ -259,6 +261,16 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
           onMoveTicket={onMoveTicket}
           onRemoveSwimlane={onRemoveSwimlane}
           onOpenTicket={onOpenTicket}
+          draggedSwimlaneId={draggedSwimlaneId}
+          onDragSwimlane={setDraggedSwimlaneId}
+          onDropSwimlane={(sourceIndex, destIndex) => {
+            if (sourceIndex === destIndex) return
+            const newOrder = [...swimlaneTags]
+            const [movedTag] = newOrder.splice(sourceIndex, 1)
+            newOrder.splice(destIndex, 0, movedTag)
+            const swimlaneOrders = newOrder.map((t, idx) => [t.id, idx])
+            onUpdateSwimlaneOrder(swimlaneOrders)
+          }}
         />
       ))}
 

@@ -139,6 +139,15 @@ function App() {
     loadData(currentBoardId)
   }
 
+  async function updateSwimlaneOrder(swimlaneOrders) {
+    await fetch(`http://localhost:3000/boards/${currentBoardId}/swimlanes/order`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swimlane_orders: swimlaneOrders }),
+    })
+    loadData(currentBoardId)
+  }
+
   async function openTicketBoard(ticketId, ticketTitle) {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
@@ -212,6 +221,7 @@ function App() {
           onMoveTicket={moveTicket}
           onAddSwimlane={addBoardSwimlane}
           onRemoveSwimlane={removeBoardSwimlane}
+          onUpdateSwimlaneOrder={updateSwimlaneOrder}
           onToggleUntagged={() => setShowUntagged(s => !s)}
           onOpenTicket={openTicketBoard}
         />

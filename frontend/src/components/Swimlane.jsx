@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import Column from './Column'
 
-function Swimlane({ tag, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onRemoveSwimlane, onOpenTicket }) {
+function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onRemoveSwimlane, onOpenTicket, draggedSwimlaneId, onDragSwimlane, onDropSwimlane }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [dragOverSwimlane, setDragOverSwimlane] = useState(false)
 
   function startEditing() {
     setDraft(tag.name)
@@ -33,9 +34,39 @@ function Swimlane({ tag, columns, tickets, allTags, ticketProgress, onRefresh, o
     onRemoveSwimlane(tag.id)
   }
 
+  function handleDragStart(e) {
+    e.dataTransfer.effectAllowed = 'move'
+    onDragSwimlane(swimlaneIndex)
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverSwimlane(true)
+  }
+
+  function handleDragLeave(e) {
+    setDragOverSwimlane(false)
+  }
+
+  function handleDrop(e) {
+    e.preventDefault()
+    setDragOverSwimlane(false)
+    onDropSwimlane(draggedSwimlaneId, swimlaneIndex)
+  }
+
   return (
-    <div className="swimlane">
-      <div className="swimlane-label">
+    <div
+      className={`swimlane ${dragOverSwimlane ? 'swimlane-drag-over' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <div
+        className="swimlane-label"
+        draggable={tag ? true : false}
+        onDragStart={handleDragStart}
+      >
         {tag ? (
           <div className="swimlane-label-content">
             {editing ? (

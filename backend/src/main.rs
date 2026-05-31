@@ -65,6 +65,12 @@ struct UpdateTicket {
     column_id: Option<i64>,
     title: Option<String>,
     description: Option<String>,
+    due_date: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct UpdateSwimlaneOrder {
+    swimlane_orders: Vec<(i64, i64)>, // (tag_id, position)
 }
 
 // --- Response types ---
@@ -116,6 +122,7 @@ async fn main() {
         .route("/boards", axum::routing::get(list_boards))
         .route("/boards/:id", axum::routing::get(get_board))
         .route("/boards/:id/swimlanes", axum::routing::get(get_board_swimlanes))
+        .route("/boards/:id/swimlanes/order", axum::routing::patch(update_swimlane_order))
         .route("/boards/:id/swimlanes/:tag_id", axum::routing::post(add_board_swimlane).delete(remove_board_swimlane))
         .route("/tickets", axum::routing::post(create_ticket))
         .route("/tickets/:id", axum::routing::patch(update_ticket).delete(delete_ticket))
@@ -168,12 +175,18 @@ async fn init_db(pool: &sqlx::SqlitePool) {
         "CREATE TABLE IF NOT EXISTS board_swimlanes (
             board_id INTEGER NOT NULL REFERENCES boards(id),
             tag_id   INTEGER NOT NULL REFERENCES tags(id),
+            position INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (board_id, tag_id)
         )",
     )
     .execute(pool)
     .await
     .expect("Failed to create board_swimlanes table");
+
+    // Add position column if it doesn't exist (for existing databases)
+    let _ = sqlx::query("ALTER TABLE board_swimlanes ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
+        .execute(pool)
+        .await;
 
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS columns (
@@ -230,7 +243,7 @@ async fn init_db(pool: &sqlx::SqlitePool) {
         .await
         .expect("Failed to seed root board");
 
-        for (pos, name) in ["To Do", "In Progress", "Done"].iter().enumerate() {
+        for (pos, name) in ["Backlog", "To Do", "In Progress", "Done"].iter().enumerate() {
             sqlx::query("INSERT INTO columns (board_id, name, position) VALUES (?, ?, ?)")
                 .bind(board_id)
                 .bind(name)
@@ -240,7 +253,7 @@ async fn init_db(pool: &sqlx::SqlitePool) {
                 .expect("Failed to seed column");
         }
 
-        println!("Seeded: company, root board, and columns (To Do / In Progress / Done)");
+        println!("Seeded: company, root board, and columns (Backlog / To Do / In Progress / Done)");
     }
 }
 
@@ -318,7 +331,8 @@ async fn get_board_swimlanes(
     let tags: Vec<Tag> = sqlx::query_as(
         "SELECT t.id, t.name FROM tags t
          JOIN board_swimlanes bs ON bs.tag_id = t.id
-         WHERE bs.board_id = ?",
+         WHERE bs.board_id = ?
+         ORDER BY bs.position",
     )
     .bind(board_id)
     .fetch_all(&pool)
@@ -331,9 +345,16 @@ async fn add_board_swimlane(
     axum::extract::Path((board_id, tag_id)): axum::extract::Path<(i64, i64)>,
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
 ) -> axum::http::StatusCode {
-    sqlx::query("INSERT OR IGNORE INTO board_swimlanes (board_id, tag_id) VALUES (?, ?)")
+    let position: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM board_swimlanes WHERE board_id = ?")
+        .bind(board_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap_or(0);
+
+    sqlx::query("INSERT OR IGNORE INTO board_swimlanes (board_id, tag_id, position) VALUES (?, ?, ?)")
         .bind(board_id)
         .bind(tag_id)
+        .bind(position)
         .execute(&pool)
         .await
         .expect("Failed to add swimlane");
@@ -350,6 +371,23 @@ async fn remove_board_swimlane(
         .execute(&pool)
         .await
         .expect("Failed to remove swimlane");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn update_swimlane_order(
+    axum::extract::Path(board_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+    axum::Json(body): axum::Json<UpdateSwimlaneOrder>,
+) -> axum::http::StatusCode {
+    for (tag_id, position) in body.swimlane_orders {
+        sqlx::query("UPDATE board_swimlanes SET position = ? WHERE board_id = ? AND tag_id = ?")
+            .bind(position)
+            .bind(board_id)
+            .bind(tag_id)
+            .execute(&pool)
+            .await
+            .expect("Failed to update swimlane order");
+    }
     axum::http::StatusCode::NO_CONTENT
 }
 
@@ -502,6 +540,15 @@ async fn update_ticket(
             .expect("Failed to update ticket description");
     }
 
+    if let Some(ref due_date) = body.due_date {
+        sqlx::query("UPDATE tickets SET due_date = ? WHERE id = ?")
+            .bind(due_date)
+            .bind(ticket_id)
+            .execute(&pool)
+            .await
+            .expect("Failed to update ticket due_date");
+    }
+
     let ticket: Option<TicketRow> =
         sqlx::query_as("SELECT id, title, description, position FROM tickets WHERE id = ?")
             .bind(ticket_id)
@@ -607,7 +654,7 @@ async fn get_or_create_subboard(
             .await
             .expect("Failed to create subboard");
 
-            for (pos, name) in ["To Do", "In Progress", "Done"].iter().enumerate() {
+            for (pos, name) in ["Backlog", "To Do", "In Progress", "Done"].iter().enumerate() {
                 sqlx::query("INSERT INTO columns (board_id, name, position) VALUES (?, ?, ?)")
                     .bind(new_id)
                     .bind(name)

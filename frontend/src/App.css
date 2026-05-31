@@ -426,6 +426,19 @@ body {
   border-right: 1px solid #e0e7ff;
   display: flex;
   align-items: flex-start;
+  cursor: grab;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.swimlane-label:active {
+  cursor: grabbing;
+}
+
+.swimlane.swimlane-drag-over {
+  opacity: 0.6;
+  border-left-color: #764ba2;
+  border-left-width: 6px;
 }
 
 .swimlane-columns {
