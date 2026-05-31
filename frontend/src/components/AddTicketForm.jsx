@@ -4,6 +4,7 @@ import TagMultiSelect from './TagMultiSelect'
 function AddTicketForm({ column, allTags, swimlaneTag, onRefresh, onCancel }) {
   const [title, setTitle] = useState('')
   const [selectedTags, setSelectedTags] = useState(swimlaneTag ? [swimlaneTag.id] : [])
+  const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
 
   async function handleSubmit(e) {
@@ -16,6 +17,7 @@ function AddTicketForm({ column, allTags, swimlaneTag, onRefresh, onCancel }) {
       body: JSON.stringify({
         column_id: column.id,
         title: title.trim(),
+        start_date: startDate || null,
         due_date: dueDate || null,
       }),
     })
@@ -41,18 +43,35 @@ function AddTicketForm({ column, allTags, swimlaneTag, onRefresh, onCancel }) {
         placeholder="Ticket title"
         autoFocus
       />
-      <input
-        type="date"
-        className="add-ticket-date-input"
-        value={dueDate}
-        onChange={e => setDueDate(e.target.value)}
-      />
+      <div className="add-ticket-dates">
+        <div className="add-ticket-date-field">
+          <label className="add-ticket-date-label">Start date</label>
+          <input
+            type="date"
+            className="add-ticket-date-input"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+          />
+        </div>
+        <div className="add-ticket-date-field">
+          <label className="add-ticket-date-label">End date</label>
+          <input
+            type="date"
+            className="add-ticket-date-input"
+            value={dueDate}
+            onChange={e => setDueDate(e.target.value)}
+          />
+        </div>
+      </div>
       {allTags.length > 0 && (
-        <TagMultiSelect
-          tags={allTags}
-          selectedTags={selectedTags}
-          onChange={setSelectedTags}
-        />
+        <div className="add-ticket-tags-section">
+          <label className="add-ticket-tags-label">Tags</label>
+          <TagMultiSelect
+            tags={allTags}
+            selectedTags={selectedTags}
+            onChange={setSelectedTags}
+          />
+        </div>
       )}
       <div className="add-ticket-form-actions">
         <button type="submit">Add</button>

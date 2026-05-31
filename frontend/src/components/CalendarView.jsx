@@ -169,9 +169,6 @@ function CalendarView({ swimlaneTags, tickets, allTags, showUntagged, ticketProg
         <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))}>←</button>
         <h2>{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
         <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))}>→</button>
-        <button className="view-toggle-btn" onClick={onToggleView} style={{ marginLeft: 'auto' }} title="Switch views">
-          📊 Kanban
-        </button>
       </div>
 
       <div className="calendar-grid">

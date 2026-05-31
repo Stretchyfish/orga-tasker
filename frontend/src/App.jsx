@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Header from './components/Header'
 import Breadcrumb from './components/Breadcrumb'
 import Board from './components/Board'
+import TicketPanel from './components/TicketPanel'
 import './App.css'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [showUntagged, setShowUntagged] = useState(true)
   const [boardStack, setBoardStack] = useState([{ id: 1, label: 'Main Board' }])
   const [viewMode, setViewMode] = useState('kanban')
+  const [selectedTicket, setSelectedTicket] = useState(null)
 
   function setView(mode) {
     setViewMode(mode)
@@ -175,6 +177,13 @@ function App() {
     loadData(currentBoardId)
   }
 
+  function openTicketPanel(ticketId) {
+    const ticket = tickets.find(t => t.id === ticketId)
+    if (ticket) {
+      setSelectedTicket(ticket)
+    }
+  }
+
   async function openTicketBoard(ticketId, ticketTitle) {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
@@ -252,33 +261,54 @@ function App() {
       <Header companyName={companyName} onRename={renameCompany} />
       <main className="main">
         <Breadcrumb stack={boardStack} onNavigate={navigateTo} />
-        <Board
-          parentTicket={boardStack.length > 1 ? boardStack[boardStack.length - 1] : null}
-          allTags={allTags}
-          swimlaneTags={swimlaneTags}
-          columns={columns}
-          tickets={tickets}
-          showUntagged={showUntagged}
-          viewMode={viewMode}
-          onRefresh={() => loadData(currentBoardId)}
-          onDeleteTicket={deleteTicket}
-          onRenameTicket={renameTicket}
-          onUpdateDescription={updateTicketDescription}
-          onUpdateDate={updateTicketDate}
-          onUpdateStartDate={updateTicketStartDate}
-          onDeleteTag={deleteTag}
-          onRenameTag={renameTag}
-          onAddTag={addTag}
-          onRemoveTag={removeTag}
-          onMoveTicket={moveTicket}
-          onAddSwimlane={addBoardSwimlane}
-          onRemoveSwimlane={removeBoardSwimlane}
-          onUpdateSwimlaneOrder={updateSwimlaneOrder}
-          onToggleUntagged={() => setShowUntagged(s => !s)}
-          onSetView={setView}
-          onToggleView={toggleViewMode}
-          onOpenTicket={openTicketBoard}
-        />
+        <div className="board-and-panel">
+          <Board
+            parentTicket={boardStack.length > 1 ? boardStack[boardStack.length - 1] : null}
+            allTags={allTags}
+            swimlaneTags={swimlaneTags}
+            columns={columns}
+            tickets={tickets}
+            showUntagged={showUntagged}
+            viewMode={viewMode}
+            onRefresh={() => loadData(currentBoardId)}
+            onDeleteTicket={deleteTicket}
+            onRenameTicket={renameTicket}
+            onUpdateDescription={updateTicketDescription}
+            onUpdateDate={updateTicketDate}
+            onUpdateStartDate={updateTicketStartDate}
+            onDeleteTag={deleteTag}
+            onRenameTag={renameTag}
+            onAddTag={addTag}
+            onRemoveTag={removeTag}
+            onMoveTicket={moveTicket}
+            onAddSwimlane={addBoardSwimlane}
+            onRemoveSwimlane={removeBoardSwimlane}
+            onUpdateSwimlaneOrder={updateSwimlaneOrder}
+            onToggleUntagged={() => setShowUntagged(s => !s)}
+            onSetView={setView}
+            onToggleView={toggleViewMode}
+            onOpenTicket={openTicketPanel}
+          />
+          {selectedTicket && (
+            <TicketPanel
+              ticket={selectedTicket}
+              allTags={allTags}
+              ticketProgress={(() => {
+                // Find progress for selected ticket if it has a board
+                const doneCount = selectedTicket.columnName === 'Done' ? 1 : 0
+                return { [selectedTicket.id]: { done: doneCount, total: 1 } }
+              })()}
+              onUpdateDate={updateTicketDate}
+              onUpdateStartDate={updateTicketStartDate}
+              onUpdateDescription={updateTicketDescription}
+              onRenameTicket={renameTicket}
+              onAddTag={addTag}
+              onRemoveTag={removeTag}
+              onOpenBoard={openTicketBoard}
+              onClose={() => setSelectedTicket(null)}
+            />
+          )}
+        </div>
       </main>
     </div>
   )
