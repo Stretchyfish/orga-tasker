@@ -10,6 +10,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
   const [descDraft, setDescDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
   const [dateDraft, setDateDraft] = useState('')
+  const [showTagDropdown, setShowTagDropdown] = useState(false)
   const [ticketProgress, setTicketProgress] = useState({})
 
   function startEditingTitle() {
@@ -166,6 +167,56 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
                 )}
               </div>
             )}
+          </div>
+          <div className="parent-ticket-tags-section">
+            <div className="parent-ticket-tags">
+              {(parentTicket.tags || []).map(tagName => {
+                const tag = allTags.find(t => t.name === tagName)
+                return (
+                  <span key={tagName} className="parent-ticket-tag">
+                    {tagName}
+                    {tag && (
+                      <button
+                        className="parent-tag-remove-btn"
+                        onClick={() => onRemoveTag(parentTicket.ticketId, tag.id)}
+                        title="Remove tag"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </span>
+                )
+              })}
+              {allTags.length > (parentTicket.tags || []).length && (
+                <div className="parent-ticket-tag-dropdown">
+                  <button
+                    className="parent-ticket-tag-add-btn"
+                    onClick={() => setShowTagDropdown(!showTagDropdown)}
+                    title="Add tag"
+                  >
+                    + tag
+                  </button>
+                  {showTagDropdown && (
+                    <div className="parent-ticket-tag-dropdown-menu">
+                      {allTags
+                        .filter(t => !(parentTicket.tags || []).includes(t.name))
+                        .map(tag => (
+                          <button
+                            key={tag.id}
+                            className="parent-ticket-tag-option"
+                            onClick={() => {
+                              onAddTag(parentTicket.ticketId, tag.id)
+                              setShowTagDropdown(false)
+                            }}
+                          >
+                            {tag.name}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

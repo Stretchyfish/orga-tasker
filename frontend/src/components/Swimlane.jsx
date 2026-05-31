@@ -65,6 +65,7 @@ function Swimlane({ tag, columns, tickets, allTags, ticketProgress, onRefresh, o
             key={col.id}
             column={col}
             columns={columns}
+            swimlaneTag={tag}
             tickets={tickets.filter(t => t.columnName === col.name)}
             allTags={allTags}
             ticketProgress={ticketProgress}

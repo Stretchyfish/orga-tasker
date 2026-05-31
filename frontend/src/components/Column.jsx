@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Ticket from './Ticket'
 import AddTicketForm from './AddTicketForm'
 
-function Column({ column, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
+function Column({ column, columns, swimlaneTag, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
   const [adding, setAdding] = useState(false)
 
   return (
@@ -27,6 +27,7 @@ function Column({ column, columns, tickets, allTags, ticketProgress, onRefresh, 
         ? <AddTicketForm
             column={column}
             allTags={allTags}
+            swimlaneTag={swimlaneTag}
             onRefresh={onRefresh}
             onCancel={() => setAdding(false)}
           />

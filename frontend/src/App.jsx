@@ -90,11 +90,33 @@ function App() {
 
   async function addTag(ticketId, tagId) {
     await fetch(`http://localhost:3000/tickets/${ticketId}/tags/${tagId}`, { method: 'POST' })
+    const tag = allTags.find(t => t.id === tagId)
+    if (tag) {
+      setTickets(prev =>
+        prev.map(t => t.id === ticketId ? { ...t, tags: [...t.tags, tag.name] } : t)
+      )
+      setBoardStack(prev =>
+        prev.map(item =>
+          item.ticketId === ticketId ? { ...item, tags: [...(item.tags || []), tag.name] } : item
+        )
+      )
+    }
     loadData(currentBoardId)
   }
 
   async function removeTag(ticketId, tagId) {
     await fetch(`http://localhost:3000/tickets/${ticketId}/tags/${tagId}`, { method: 'DELETE' })
+    const tag = allTags.find(t => t.id === tagId)
+    if (tag) {
+      setTickets(prev =>
+        prev.map(t => t.id === ticketId ? { ...t, tags: t.tags.filter(tn => tn !== tag.name) } : t)
+      )
+      setBoardStack(prev =>
+        prev.map(item =>
+          item.ticketId === ticketId ? { ...item, tags: (item.tags || []).filter(tn => tn !== tag.name) } : item
+        )
+      )
+    }
     loadData(currentBoardId)
   }
 
@@ -121,7 +143,14 @@ function App() {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
     const currentTicket = tickets.find(t => t.id === ticketId)
-    setBoardStack(prev => [...prev, { id: board.id, label: ticketTitle, ticketId, description: currentTicket?.description || '' }])
+    setBoardStack(prev => [...prev, {
+      id: board.id,
+      label: ticketTitle,
+      ticketId,
+      description: currentTicket?.description || '',
+      due_date: currentTicket?.due_date,
+      tags: currentTicket?.tags || [],
+    }])
   }
 
   async function updateTicketDescription(ticketId, description) {

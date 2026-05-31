@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import TagMultiSelect from './TagMultiSelect'
 
-function AddTicketForm({ column, allTags, onRefresh, onCancel }) {
+function AddTicketForm({ column, allTags, swimlaneTag, onRefresh, onCancel }) {
   const [title, setTitle] = useState('')
-  const [selectedTags, setSelectedTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState(swimlaneTag ? [swimlaneTag.id] : [])
   const [dueDate, setDueDate] = useState('')
 
   async function handleSubmit(e) {
