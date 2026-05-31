@@ -64,6 +64,9 @@ body {
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* Parent ticket header (when viewing sub-board) */
@@ -383,12 +386,8 @@ body {
 
 .board-column-headers {
   display: flex;
-  margin-bottom: 4px;
-}
-
-.swimlane-label-spacer {
-  width: 140px;
-  flex-shrink: 0;
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .board-column-header {
@@ -400,8 +399,13 @@ body {
   letter-spacing: 0.08em;
   color: #667eea;
   padding: 12px 8px;
-  background: #f0f4ff;
-  border-radius: 4px;
+  background: #f9fafb;
+  border-radius: 0;
+  border-right: 1px solid #e5e7eb;
+}
+
+.board-column-header:last-child {
+  border-right: none;
 }
 
 /* Swimlane row */
@@ -409,10 +413,11 @@ body {
   display: flex;
   border: none;
   background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-radius: 0;
+  margin-bottom: 0;
   overflow: hidden;
-  border-left: 4px solid #667eea;
+  border-left: none;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .swimlane-label {
@@ -1072,9 +1077,55 @@ body {
   background: #e8e8e8;
 }
 
-/* View toggle button container */
-.view-toggle-container {
-  margin-bottom: 12px;
+/* Grid layout for board */
+.board-grid-layout {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  grid-template-rows: auto 1fr;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  gap: 0;
+  background: white;
+}
+
+.board-grid-top-left {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0;
+  background: #f0f4ff;
+  border-right: 1px solid #e0e7ff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+}
+
+.board-grid-content {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-grid-roadmap {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.board-column-headers {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  margin: 0;
+  padding: 0;
+}
+
+.swimlane-label-spacer {
+  display: none;
 }
 
 .view-toggle-btn {
@@ -1091,7 +1142,7 @@ body {
 
 .view-toggle-btn:hover {
   border-color: #667eea;
-  background: #f0f4ff;
+  background: white;
   color: #667eea;
 }
 
@@ -1124,6 +1175,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+  background: white;
 }
 
 .roadmap-swimlane-column {
@@ -1135,15 +1187,14 @@ body {
   flex-direction: column;
 }
 
-.roadmap-header-spacer {
-  height: 60px;
+.roadmap-toggle-container {
+  padding: 0;
+  background: #f0f4ff;
   border-bottom: 1px solid #e0e7ff;
   display: flex;
   align-items: center;
-  padding: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #667eea;
+  justify-content: center;
+  min-height: 50px;
 }
 
 .roadmap-swimlane-label {
@@ -1173,10 +1224,12 @@ body {
 
 .roadmap-timeline-header {
   flex-shrink: 0;
-  height: 60px;
+  height: 50px;
   border-bottom: 1px solid #e5e7eb;
   overflow-x: auto;
   background: #f9fafb;
+  display: flex;
+  align-items: center;
 }
 
 .roadmap-timeline-track {
@@ -1224,23 +1277,28 @@ body {
 
 .roadmap-bar {
   position: absolute;
-  height: 30px;
-  top: 50%;
-  transform: translateY(-50%);
   background: #667eea;
   border: 1px solid #5a67d8;
   border-radius: 4px;
-  padding: 4px 6px;
+  padding: 2px 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 4px;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .roadmap-bar:hover {
   filter: brightness(1.1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 5;
+}
+
+.roadmap-bar.dragging {
+  z-index: 10;
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .roadmap-bar-label {
@@ -1250,6 +1308,37 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
+  flex: 1;
+}
+
+.roadmap-bar-progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.roadmap-bar-progress-bar {
+  width: 60px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.roadmap-bar-progress-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+}
+
+.roadmap-bar-progress-text {
+  font-size: 9px;
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .roadmap-no-dates {

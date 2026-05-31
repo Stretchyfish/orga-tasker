@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -9,40 +9,36 @@ function formatDate(dateString) {
   return `${day}/${month}/${year}`
 }
 
-function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, onUpdateStartDate, onUpdateDate, onRenameTicket }) {
+function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, ticketProgress, onUpdateStartDate, onUpdateDate, onRenameTicket, onToggleView, onOpenTicket }) {
   const [editingBar, setEditingBar] = useState(null)
   const [startDateEdit, setStartDateEdit] = useState('')
   const [dueDateEdit, setDueDateEdit] = useState('')
+  const [draggingBar, setDraggingBar] = useState(null)
+  const [dragType, setDragType] = useState(null) // 'start', 'end', or 'move'
+  const [dragStartX, setDragStartX] = useState(0)
+  const [dragOriginalDates, setDragOriginalDates] = useState(null)
 
-  // Get all tickets with at least one date
-  const datedTickets = tickets.filter(t => t.start_date || t.due_date)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Get all tickets with a due date (tickets without any date show in "No dates" row)
+  const datedTickets = tickets.filter(t => t.due_date)
 
   // Compute date range
-  let minDate = null
-  let maxDate = null
+
+  let minDate = new Date(today)
+  let maxDate = new Date(today)
 
   datedTickets.forEach(t => {
     if (t.start_date) {
       const d = new Date(t.start_date)
-      if (!minDate || d < minDate) minDate = d
+      if (d < minDate) minDate = d
     }
     if (t.due_date) {
       const d = new Date(t.due_date)
-      if (!maxDate || d > maxDate) maxDate = d
+      if (d > maxDate) maxDate = d
     }
   })
-
-  if (!minDate && !maxDate) {
-    minDate = new Date()
-    maxDate = new Date()
-    maxDate.setDate(maxDate.getDate() + 30)
-  } else if (!minDate) {
-    minDate = new Date(maxDate)
-    minDate.setDate(minDate.getDate() - 30)
-  } else if (!maxDate) {
-    maxDate = new Date(minDate)
-    maxDate.setDate(maxDate.getDate() + 30)
-  }
 
   // Add padding
   minDate.setDate(minDate.getDate() - 7)
@@ -76,8 +72,8 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, onUpdateSta
   }
 
   function getBarPosition(startDate, dueDate) {
-    const start = startDate ? new Date(startDate) : new Date(dueDate)
-    const end = dueDate ? new Date(dueDate) : new Date(startDate)
+    const start = startDate ? new Date(startDate) : today
+    const end = dueDate ? new Date(dueDate) : today
 
     const daysFromStart = Math.ceil((start - minDate) / (1000 * 60 * 60 * 24))
     const barDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
@@ -88,12 +84,101 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, onUpdateSta
     }
   }
 
+  useEffect(() => {
+    if (draggingBar) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [draggingBar, dragType, dragStartX, dragOriginalDates, timelineWidth])
+
   async function saveBarEdit() {
     if (editingBar) {
       await onUpdateStartDate(editingBar.id, startDateEdit || null)
       await onUpdateDate(editingBar.id, dueDateEdit || null)
       setEditingBar(null)
     }
+  }
+
+  function handleBarMouseDown(e, ticket, barElement) {
+    if (e.button !== 0) return // Only left mouse button
+
+    const rect = barElement.getBoundingClientRect()
+    const barWidth = rect.width
+    const relativeX = e.clientX - rect.left
+    const percentX = relativeX / barWidth
+
+    let type = 'move'
+    if (percentX < 0.15) type = 'start'
+    else if (percentX > 0.85) type = 'end'
+
+    setDraggingBar(ticket)
+    setDragType(type)
+    setDragStartX(e.clientX)
+    setDragOriginalDates({
+      start: ticket.start_date,
+      end: ticket.due_date,
+    })
+    e.preventDefault()
+  }
+
+  function handleMouseMove(e) {
+    if (!draggingBar || !dragType || !dragOriginalDates) return
+
+    const deltaX = e.clientX - dragStartX
+    const daysDelta = Math.round(deltaX * totalDays / (timelineWidth || 1))
+
+    const start = dragOriginalDates.start ? new Date(dragOriginalDates.start) : new Date(today)
+    const end = dragOriginalDates.end ? new Date(dragOriginalDates.end) : new Date(today)
+
+    let newStart = new Date(start)
+    let newEnd = new Date(end)
+
+    if (daysDelta !== 0) {
+      if (dragType === 'start') {
+        newStart.setDate(newStart.getDate() + daysDelta)
+      } else if (dragType === 'end') {
+        newEnd.setDate(newEnd.getDate() + daysDelta)
+      } else {
+        newStart.setDate(newStart.getDate() + daysDelta)
+        newEnd.setDate(newEnd.getDate() + daysDelta)
+      }
+    }
+
+    const formatDateForAPI = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    // Update the dragging bar in the UI optimistically
+    const updatedTicket = { ...draggingBar }
+    if (dragType === 'start' || dragType === 'move') {
+      updatedTicket.start_date = formatDateForAPI(newStart)
+    }
+    if (dragType === 'end' || dragType === 'move') {
+      updatedTicket.due_date = formatDateForAPI(newEnd)
+    }
+    setDraggingBar(updatedTicket)
+  }
+
+  function handleMouseUp() {
+    if (!draggingBar || !dragType) return
+
+    if (dragType === 'start' || dragType === 'move') {
+      onUpdateStartDate(draggingBar.id, draggingBar.start_date || null)
+    }
+    if (dragType === 'end' || dragType === 'move') {
+      onUpdateDate(draggingBar.id, draggingBar.due_date || null)
+    }
+
+    setDraggingBar(null)
+    setDragType(null)
+    setDragOriginalDates(null)
   }
 
   // Organize tickets by swimlane
@@ -110,12 +195,16 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, onUpdateSta
     })
   }
 
-  const undatedTickets = tickets.filter(t => !t.start_date && !t.due_date)
+  const undatedTickets = tickets.filter(t => !t.due_date)
 
   return (
     <div className="roadmap-view">
       <div className="roadmap-swimlane-column">
-        <div className="roadmap-header-spacer" />
+        <div className="roadmap-toggle-container">
+          <button className="view-toggle-btn" onClick={onToggleView} title="Switch to kanban view">
+            📊 Kanban
+          </button>
+        </div>
         {swimlaneTickets.map((s) => (
           <div key={s.tag?.id || '__untagged__'} className="roadmap-swimlane-label">
             {s.tag ? s.tag.name : 'Untagged'}
@@ -148,30 +237,58 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, onUpdateSta
           {swimlaneTickets.map((s) => (
             <div key={s.tag?.id || '__untagged__'} className="roadmap-swimlane-row">
               <div className="roadmap-timeline-track" style={{ width: `${timelineWidth}px` }}>
-                {s.tickets.map(ticket => {
+                {s.tickets.map((ticket, ticketIndex) => {
                   if (!ticket.start_date && !ticket.due_date) return null
                   const pos = getBarPosition(ticket.start_date, ticket.due_date)
                   const columnColor = ticket.columnName === 'Done' ? '#4ade80' :
                                      ticket.columnName === 'In Progress' ? '#3b82f6' :
                                      ticket.columnName === 'To Do' ? '#f59e0b' : '#9ca3af'
 
+                  const barHeight = 24
+                  const totalBars = s.tickets.filter(t => t.due_date).length
+                  const verticalPos = (ticketIndex * barHeight) + (80 - totalBars * barHeight) / 2
+
+                  const progress = ticketProgress[ticket.id]
+
+                  // Use dragging bar if it's being dragged
+                  const displayTicket = draggingBar?.id === ticket.id ? draggingBar : ticket
+                  const displayPos = getBarPosition(displayTicket.start_date, displayTicket.due_date)
+
                   return (
                     <div
                       key={ticket.id}
-                      className="roadmap-bar"
+                      className={`roadmap-bar ${draggingBar?.id === ticket.id ? 'dragging' : ''}`}
                       style={{
-                        left: `${pos.leftPercent}%`,
-                        width: `${pos.widthPercent}%`,
+                        left: `${displayPos.leftPercent}%`,
+                        width: `${displayPos.widthPercent}%`,
                         backgroundColor: columnColor,
+                        top: `${verticalPos}px`,
+                        height: `${barHeight}px`,
+                        transform: 'none',
+                        cursor: draggingBar?.id === ticket.id ? 'grabbing' : 'grab',
                       }}
-                      onClick={() => {
-                        setEditingBar(ticket)
-                        setStartDateEdit(ticket.start_date || '')
-                        setDueDateEdit(ticket.due_date || '')
+                      onMouseDown={(e) => {
+                        if (e.detail === 1) { // Single click for drag, double click to edit
+                          handleBarMouseDown(e, ticket, e.currentTarget)
+                        }
+                      }}
+                      onDoubleClick={() => {
+                        onOpenTicket(ticket.id, ticket.title)
                       }}
                       title={ticket.title}
                     >
                       <span className="roadmap-bar-label">{ticket.title}</span>
+                      {progress && (
+                        <div className="roadmap-bar-progress">
+                          <div className="roadmap-bar-progress-bar">
+                            <div
+                              className="roadmap-bar-progress-fill"
+                              style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                            />
+                          </div>
+                          <span className="roadmap-bar-progress-text">{Math.round((progress.done / progress.total) * 100)}%</span>
+                        </div>
+                      )}
                     </div>
                   )
                 })}

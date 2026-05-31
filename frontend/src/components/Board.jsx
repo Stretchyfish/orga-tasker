@@ -316,22 +316,22 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
         </label>
       </div>
 
-      <div className="view-toggle-container">
-        <button className="view-toggle-btn" onClick={onToggleView} title={`Switch to ${viewMode === 'kanban' ? 'roadmap' : 'kanban'} view`}>
-          {viewMode === 'kanban' ? '📅 Roadmap' : '📊 Kanban'}
-        </button>
-      </div>
-
       {viewMode === 'kanban' ? (
-        <>
+        <div className="board-grid-layout">
+          <div className="board-grid-top-left">
+            <button className="view-toggle-btn" onClick={onToggleView} title="Switch to roadmap view">
+              📅 Roadmap
+            </button>
+          </div>
+
           <div className="board-column-headers">
-            <div className="swimlane-label-spacer" />
             {columns.map(col => (
               <div key={col.id} className="board-column-header">{col.name}</div>
             ))}
           </div>
 
-          {swimlaneTags.map((tag, index) => (
+          <div className="board-grid-content">
+            {swimlaneTags.map((tag, index) => (
             <Swimlane
               key={tag.id}
               tag={tag}
@@ -364,36 +364,40 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             />
           ))}
 
-          {showUntagged && (
-            <Swimlane
-              key="__untagged__"
-              tag={null}
-              columns={columns}
-              tickets={untagged}
-              allTags={allTags}
-              ticketProgress={ticketProgress}
-              onRefresh={onRefresh}
-              onDeleteTicket={onDeleteTicket}
-              onRenameTicket={onRenameTicket}
-              onUpdateDate={onUpdateDate}
-              onDeleteTag={onDeleteTag}
-              onRenameTag={onRenameTag}
-              onAddTag={onAddTag}
-              onRemoveTag={onRemoveTag}
-              onMoveTicket={onMoveTicket}
-              onOpenTicket={onOpenTicket}
-            />
-          )}
-        </>
+            {showUntagged && (
+              <Swimlane
+                key="__untagged__"
+                tag={null}
+                columns={columns}
+                tickets={untagged}
+                allTags={allTags}
+                ticketProgress={ticketProgress}
+                onRefresh={onRefresh}
+                onDeleteTicket={onDeleteTicket}
+                onRenameTicket={onRenameTicket}
+                onUpdateDate={onUpdateDate}
+                onDeleteTag={onDeleteTag}
+                onRenameTag={onRenameTag}
+                onAddTag={onAddTag}
+                onRemoveTag={onRemoveTag}
+                onMoveTicket={onMoveTicket}
+                onOpenTicket={onOpenTicket}
+              />
+            )}
+          </div>
+        </div>
       ) : (
         <RoadmapView
           swimlaneTags={swimlaneTags}
           tickets={tickets}
           allTags={allTags}
           showUntagged={showUntagged}
+          ticketProgress={ticketProgress}
           onUpdateStartDate={onUpdateStartDate}
           onUpdateDate={onUpdateDate}
           onRenameTicket={onRenameTicket}
+          onToggleView={onToggleView}
+          onOpenTicket={onOpenTicket}
         />
       )}
     </div>
