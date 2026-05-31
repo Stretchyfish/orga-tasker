@@ -36,10 +36,13 @@ function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgres
 
   function handleDragStart(e) {
     e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('swimlaneId', tag?.id || '')
     onDragSwimlane(swimlaneIndex)
   }
 
   function handleDragOver(e) {
+    const isSwimlane = e.dataTransfer.types.includes('swimlaneId')
+    if (!isSwimlane) return
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     setDragOverSwimlane(true)
@@ -50,6 +53,8 @@ function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgres
   }
 
   function handleDrop(e) {
+    const isSwimlane = e.dataTransfer.types.includes('swimlaneId')
+    if (!isSwimlane) return
     e.preventDefault()
     setDragOverSwimlane(false)
     onDropSwimlane(draggedSwimlaneId, swimlaneIndex)

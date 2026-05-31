@@ -953,14 +953,28 @@ body {
 .add-ticket-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .add-ticket-form input {
-  padding: 5px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.add-ticket-form input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
 }
 
 /* Custom multi-select dropdown */
@@ -1022,20 +1036,38 @@ body {
   gap: 4px;
 }
 
+.add-ticket-form-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .add-ticket-form-actions button {
-  padding: 4px 8px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .add-ticket-form-actions button[type="submit"] {
-  background: #3b5bdb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  flex: 1;
+}
+
+.add-ticket-form-actions button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .add-ticket-form-actions button[type="button"] {
-  background: #f0f0f0;
-  color: #444;
+  background: #f5f5f5;
+  color: #666;
+}
+
+.add-ticket-form-actions button[type="button"]:hover {
+  background: #e8e8e8;
 }

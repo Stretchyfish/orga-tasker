@@ -1,5 +1,36 @@
 import { useState } from 'react'
 
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function parseDate(dateString) {
+  if (!dateString) return ''
+  if (dateString.includes('-')) return dateString // Already in YYYY-MM-DD format
+  // Convert dd/mm/yyyy to yyyy-mm-dd
+  const parts = dateString.split('/')
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`
+  }
+  return dateString
+}
+
+function formatDateInput(dateString) {
+  if (!dateString) return ''
+  if (dateString.includes('/')) return dateString // Already in dd/mm/yyyy format
+  // Convert yyyy-mm-dd to dd/mm/yyyy
+  const parts = dateString.split('-')
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  return dateString
+}
+
 function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -95,7 +126,7 @@ function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMov
             onClick={startEditingDate}
             title="Click to set date"
           >
-            {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : 'No date'}
+            {ticket.due_date ? formatDate(ticket.due_date) : 'No date'}
           </span>
         )}
       </div>

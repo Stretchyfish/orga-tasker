@@ -33,6 +33,7 @@ struct TicketRow {
     id: i64,
     title: String,
     description: Option<String>,
+    due_date: Option<String>,
     position: i64,
 }
 
@@ -48,6 +49,7 @@ struct CreateTicket {
     column_id: i64,
     title: String,
     description: Option<String>,
+    due_date: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -96,6 +98,7 @@ struct TicketResponse {
     id: i64,
     title: String,
     description: Option<String>,
+    due_date: Option<String>,
     position: i64,
     tags: Vec<Tag>,
 }
@@ -206,12 +209,18 @@ async fn init_db(pool: &sqlx::SqlitePool) {
             column_id   INTEGER NOT NULL REFERENCES columns(id),
             title       TEXT NOT NULL,
             description TEXT,
+            due_date    TEXT,
             position    INTEGER NOT NULL DEFAULT 0
         )",
     )
     .execute(pool)
     .await
     .expect("Failed to create tickets table");
+
+    // Add due_date column if it doesn't exist (for existing databases)
+    let _ = sqlx::query("ALTER TABLE tickets ADD COLUMN due_date TEXT")
+        .execute(pool)
+        .await;
 
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS ticket_tags (
@@ -429,7 +438,7 @@ async fn get_board(
     let mut columns = Vec::new();
     for col in column_rows {
         let ticket_rows: Vec<TicketRow> = sqlx::query_as(
-            "SELECT id, title, description, position
+            "SELECT id, title, description, due_date, position
              FROM tickets WHERE column_id = ? ORDER BY position",
         )
         .bind(col.id)
@@ -453,6 +462,7 @@ async fn get_board(
                 id: ticket.id,
                 title: ticket.title,
                 description: ticket.description,
+                due_date: ticket.due_date,
                 position: ticket.position,
                 tags,
             });
@@ -486,11 +496,12 @@ async fn create_ticket(
             .expect("Failed to count tickets");
 
     let id: i64 = sqlx::query_scalar(
-        "INSERT INTO tickets (column_id, title, description, position) VALUES (?, ?, ?, ?) RETURNING id",
+        "INSERT INTO tickets (column_id, title, description, due_date, position) VALUES (?, ?, ?, ?, ?) RETURNING id",
     )
     .bind(body.column_id)
     .bind(&body.title)
     .bind(&body.description)
+    .bind(&body.due_date)
     .bind(position)
     .fetch_one(&pool)
     .await
@@ -502,6 +513,7 @@ async fn create_ticket(
             id,
             title: body.title,
             description: body.description,
+            due_date: body.due_date,
             position,
             tags: vec![],
         }),
@@ -550,7 +562,7 @@ async fn update_ticket(
     }
 
     let ticket: Option<TicketRow> =
-        sqlx::query_as("SELECT id, title, description, position FROM tickets WHERE id = ?")
+        sqlx::query_as("SELECT id, title, description, due_date, position FROM tickets WHERE id = ?")
             .bind(ticket_id)
             .fetch_optional(&pool)
             .await
@@ -575,6 +587,7 @@ async fn update_ticket(
         id: ticket.id,
         title: ticket.title,
         description: ticket.description,
+        due_date: ticket.due_date,
         position: ticket.position,
         tags,
     }))

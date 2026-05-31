@@ -3,6 +3,37 @@ import Swimlane from './Swimlane'
 import AddTagForm from './AddTagForm'
 import SwimlaneSelector from './SwimlaneSelector'
 
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function parseDate(dateString) {
+  if (!dateString) return ''
+  if (dateString.includes('-')) return dateString // Already in YYYY-MM-DD format
+  // Convert dd/mm/yyyy to yyyy-mm-dd
+  const parts = dateString.split('/')
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`
+  }
+  return dateString
+}
+
+function formatDateInput(dateString) {
+  if (!dateString) return ''
+  if (dateString.includes('/')) return dateString // Already in dd/mm/yyyy format
+  // Convert yyyy-mm-dd to dd/mm/yyyy
+  const parts = dateString.split('-')
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  return dateString
+}
+
 function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onOpenTicket }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -162,7 +193,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             ) : (
               <div className="parent-ticket-date-container" onClick={startEditingDate}>
                 {parentTicket.due_date ? (
-                  <p className="parent-ticket-date">{new Date(parentTicket.due_date).toLocaleDateString()}</p>
+                  <p className="parent-ticket-date">{formatDate(parentTicket.due_date)}</p>
                 ) : (
                   <p className="parent-ticket-date-placeholder">Click to add a date</p>
                 )}
