@@ -1,7 +1,7 @@
 import Swimlane from './Swimlane'
 import AddDepartmentForm from './AddDepartmentForm'
 
-function Board({ departments, columns, tickets, onRefresh, onOpenTicket }) {
+function Board({ departments, columns, tickets, onRefresh, onDeleteTicket, onRenameTicket, onDeleteDept, onRenameDept, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
   const unassigned = tickets.filter(t => t.departments.length === 0)
 
   return (
@@ -23,6 +23,13 @@ function Board({ departments, columns, tickets, onRefresh, onOpenTicket }) {
           tickets={tickets.filter(t => t.departments.includes(dept.name))}
           departments={departments}
           onRefresh={onRefresh}
+          onDeleteTicket={onDeleteTicket}
+          onRenameTicket={onRenameTicket}
+          onDeleteDept={onDeleteDept}
+          onRenameDept={onRenameDept}
+          onAddTag={onAddTag}
+          onRemoveTag={onRemoveTag}
+          onMoveTicket={onMoveTicket}
           onOpenTicket={onOpenTicket}
         />
       ))}
@@ -35,6 +42,13 @@ function Board({ departments, columns, tickets, onRefresh, onOpenTicket }) {
           tickets={unassigned}
           departments={departments}
           onRefresh={onRefresh}
+          onDeleteTicket={onDeleteTicket}
+          onRenameTicket={onRenameTicket}
+          onDeleteDept={onDeleteDept}
+          onRenameDept={onRenameDept}
+          onAddTag={onAddTag}
+          onRemoveTag={onRemoveTag}
+          onMoveTicket={onMoveTicket}
           onOpenTicket={onOpenTicket}
         />
       )}

@@ -27,6 +27,23 @@ body {
 .header-title {
   font-size: 20px;
   font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.header-title:hover {
+  color: #3b5bdb;
+}
+
+.header-title-input {
+  font-size: 20px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid #3b5bdb;
+  outline: none;
+  background: transparent;
+  color: #1a1a1a;
+  width: 300px;
 }
 
 /* Main content area */
@@ -156,21 +173,57 @@ body {
 .ticket-title {
   font-size: 13px;
   flex: 1;
+  cursor: pointer;
 }
 
-.ticket-open-btn {
+.ticket-title:hover {
+  color: #3b5bdb;
+}
+
+.ticket-title-input {
+  font-size: 13px;
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid #3b5bdb;
+  outline: none;
+  background: transparent;
+  width: 100%;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ticket-open-btn,
+.ticket-delete-btn {
   background: none;
   border: none;
-  color: #aaa;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   padding: 0 2px;
   line-height: 1;
-  flex-shrink: 0;
+  color: #aaa;
 }
 
 .ticket-open-btn:hover {
   color: #3b5bdb;
+}
+
+.ticket-delete-btn:hover {
+  color: #e03131;
+}
+
+.ticket-column-select {
+  font-size: 11px;
+  color: #666;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin-bottom: 5px;
+  cursor: pointer;
 }
 
 .ticket-departments {
@@ -185,6 +238,76 @@ body {
   color: #3b5bdb;
   border-radius: 3px;
   padding: 2px 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tag-remove-btn {
+  background: none;
+  border: none;
+  color: #3b5bdb;
+  cursor: pointer;
+  font-size: 9px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.tag-remove-btn:hover {
+  opacity: 1;
+  color: #e03131;
+}
+
+.tag-add-select {
+  font-size: 10px;
+  color: #888;
+  background: #f5f5f5;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+
+/* Swimlane label editing */
+.swimlane-label-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.swimlane-label-name {
+  cursor: pointer;
+  flex: 1;
+}
+
+.swimlane-label-name:hover {
+  color: #3b5bdb;
+}
+
+.swimlane-label-input {
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 1px solid #3b5bdb;
+  outline: none;
+  background: transparent;
+  width: 100%;
+}
+
+.swimlane-delete-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.swimlane-delete-btn:hover {
+  color: #e03131;
 }
 
 /* Add department form */
@@ -236,15 +359,73 @@ body {
   gap: 4px;
 }
 
-.add-ticket-form input,
-.add-ticket-form select {
+.add-ticket-form input {
   padding: 5px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 12px;
 }
 
-.add-ticket-form button {
+/* Custom multi-select dropdown */
+.dept-multi-select {
+  position: relative;
+}
+
+.dept-multi-select-btn {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.dept-multi-select-btn:hover {
+  border-color: #aaa;
+}
+
+.dept-multi-select-arrow {
+  font-size: 10px;
+  color: #888;
+}
+
+.dept-multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 10;
+  padding: 4px 0;
+}
+
+.dept-multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dept-multi-select-option:hover {
+  background: #f5f5f5;
+}
+
+.add-ticket-form-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.add-ticket-form-actions button {
   padding: 4px 8px;
   border: none;
   border-radius: 4px;
@@ -252,12 +433,12 @@ body {
   cursor: pointer;
 }
 
-.add-ticket-form button[type="submit"] {
+.add-ticket-form-actions button[type="submit"] {
   background: #3b5bdb;
   color: white;
 }
 
-.add-ticket-form button[type="button"] {
+.add-ticket-form-actions button[type="button"] {
   background: #f0f0f0;
   color: #444;
 }

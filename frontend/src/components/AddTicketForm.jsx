@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import DeptMultiSelect from './DeptMultiSelect'
 
-function AddTicketForm({ column, departments, defaultDeptId, onRefresh, onCancel }) {
+function AddTicketForm({ column, departments, onRefresh, onCancel }) {
   const [title, setTitle] = useState('')
-  const [deptId, setDeptId] = useState(defaultDeptId ?? '')
+  const [selectedDepts, setSelectedDepts] = useState([])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -15,11 +16,13 @@ function AddTicketForm({ column, departments, defaultDeptId, onRefresh, onCancel
     })
     const ticket = await res.json()
 
-    if (deptId) {
-      await fetch(`http://localhost:3000/tickets/${ticket.id}/departments/${deptId}`, {
-        method: 'POST',
-      })
-    }
+    await Promise.all(
+      selectedDepts.map(deptId =>
+        fetch(`http://localhost:3000/tickets/${ticket.id}/departments/${deptId}`, {
+          method: 'POST',
+        })
+      )
+    )
 
     onCancel()
     onRefresh()
@@ -33,14 +36,17 @@ function AddTicketForm({ column, departments, defaultDeptId, onRefresh, onCancel
         placeholder="Ticket title"
         autoFocus
       />
-      <select value={deptId} onChange={e => setDeptId(e.target.value)}>
-        <option value="">No department</option>
-        {departments.map(d => (
-          <option key={d.id} value={String(d.id)}>{d.name}</option>
-        ))}
-      </select>
-      <button type="submit">Add</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
+      {departments.length > 0 && (
+        <DeptMultiSelect
+          departments={departments}
+          selectedDepts={selectedDepts}
+          onChange={setSelectedDepts}
+        />
+      )}
+      <div className="add-ticket-form-actions">
+        <button type="submit">Add</button>
+        <button type="button" onClick={onCancel}>Cancel</button>
+      </div>
     </form>
   )
 }

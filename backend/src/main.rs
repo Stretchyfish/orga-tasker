@@ -52,6 +52,16 @@ struct CreateTicket {
 }
 
 #[derive(serde::Deserialize)]
+struct UpdateCompany {
+    name: String,
+}
+
+#[derive(serde::Deserialize)]
+struct UpdateDepartment {
+    name: String,
+}
+
+#[derive(serde::Deserialize)]
 struct UpdateTicket {
     column_id: Option<i64>,
     title: Option<String>,
@@ -104,14 +114,15 @@ async fn main() {
         .route("/", axum::routing::get(hello_handler))
         .route("/departments", axum::routing::get(list_departments))
         .route("/departments", axum::routing::post(create_department))
+        .route("/departments/:id", axum::routing::patch(rename_department).delete(delete_department))
         .route("/boards", axum::routing::get(list_boards))
         .route("/boards/:id", axum::routing::get(get_board))
         .route("/tickets", axum::routing::post(create_ticket))
-        .route("/tickets/:id", axum::routing::patch(update_ticket))
+        .route("/tickets/:id", axum::routing::patch(update_ticket).delete(delete_ticket))
         .route("/tickets/:id/departments/:dept_id", axum::routing::post(tag_department))
         .route("/tickets/:id/departments/:dept_id", axum::routing::delete(untag_department))
         .route("/tickets/:id/board", axum::routing::get(get_or_create_subboard))
-        .route("/company", axum::routing::get(get_company))
+        .route("/company", axum::routing::get(get_company).patch(update_company))
         .layer(CorsLayer::permissive())
         .with_state(pool);
 
@@ -533,4 +544,72 @@ async fn get_company(
         Some(c) => Ok(axum::Json(c)),
         None => Err(axum::http::StatusCode::NOT_FOUND),
     }
+}
+
+async fn update_company(
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+    axum::Json(body): axum::Json<UpdateCompany>,
+) -> Result<axum::Json<Company>, axum::http::StatusCode> {
+    if body.name.trim().is_empty() {
+        return Err(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
+    sqlx::query("UPDATE companies SET name = ? WHERE id = 1")
+        .bind(&body.name)
+        .execute(&pool)
+        .await
+        .expect("Failed to update company name");
+
+    Ok(axum::Json(Company { id: 1, name: body.name }))
+}
+
+async fn rename_department(
+    axum::extract::Path(dept_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+    axum::Json(body): axum::Json<UpdateDepartment>,
+) -> axum::http::StatusCode {
+    if body.name.trim().is_empty() {
+        return axum::http::StatusCode::UNPROCESSABLE_ENTITY;
+    }
+    sqlx::query("UPDATE departments SET name = ? WHERE id = ?")
+        .bind(&body.name)
+        .bind(dept_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to rename department");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn delete_department(
+    axum::extract::Path(dept_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("DELETE FROM ticket_departments WHERE department_id = ?")
+        .bind(dept_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove department tags");
+    sqlx::query("DELETE FROM departments WHERE id = ?")
+        .bind(dept_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to delete department");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn delete_ticket(
+    axum::extract::Path(ticket_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("DELETE FROM ticket_departments WHERE ticket_id = ?")
+        .bind(ticket_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove ticket tags");
+    sqlx::query("DELETE FROM tickets WHERE id = ?")
+        .bind(ticket_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to delete ticket");
+    axum::http::StatusCode::NO_CONTENT
 }

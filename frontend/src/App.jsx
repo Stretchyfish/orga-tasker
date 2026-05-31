@@ -31,6 +31,7 @@ function App() {
             col.tickets.map(ticket => ({
               id: ticket.id,
               title: ticket.title,
+              columnId: col.id,
               columnName: col.name,
               departments: ticket.departments.map(d => d.name),
             }))
@@ -42,6 +43,62 @@ function App() {
   useEffect(() => {
     loadData(currentBoardId)
   }, [loadData, currentBoardId])
+
+  async function renameCompany(name) {
+    await fetch('http://localhost:3000/company', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    setCompanyName(name)
+  }
+
+  async function deleteTicket(ticketId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, { method: 'DELETE' })
+    loadData(currentBoardId)
+  }
+
+  async function renameTicket(ticketId, title) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+    loadData(currentBoardId)
+  }
+
+  async function deleteDepartment(deptId) {
+    await fetch(`http://localhost:3000/departments/${deptId}`, { method: 'DELETE' })
+    loadData(currentBoardId)
+  }
+
+  async function renameDepartment(deptId, name) {
+    await fetch(`http://localhost:3000/departments/${deptId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    loadData(currentBoardId)
+  }
+
+  async function addTag(ticketId, deptId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}/departments/${deptId}`, { method: 'POST' })
+    loadData(currentBoardId)
+  }
+
+  async function removeTag(ticketId, deptId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}/departments/${deptId}`, { method: 'DELETE' })
+    loadData(currentBoardId)
+  }
+
+  async function moveTicket(ticketId, columnId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ column_id: columnId }),
+    })
+    loadData(currentBoardId)
+  }
 
   async function openTicketBoard(ticketId, ticketTitle) {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
@@ -55,7 +112,7 @@ function App() {
 
   return (
     <div className="app">
-      <Header companyName={companyName} />
+      <Header companyName={companyName} onRename={renameCompany} />
       <main className="main">
         <Breadcrumb stack={boardStack} onNavigate={navigateTo} />
         <Board
@@ -63,6 +120,13 @@ function App() {
           columns={columns}
           tickets={tickets}
           onRefresh={() => loadData(currentBoardId)}
+          onDeleteTicket={deleteTicket}
+          onRenameTicket={renameTicket}
+          onDeleteDept={deleteDepartment}
+          onRenameDept={renameDepartment}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
+          onMoveTicket={moveTicket}
           onOpenTicket={openTicketBoard}
         />
       </main>
