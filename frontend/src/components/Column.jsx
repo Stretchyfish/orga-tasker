@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Ticket from './Ticket'
 import AddTicketForm from './AddTicketForm'
 
-function Column({ column, columns, tickets, departments, onRefresh, onDeleteTicket, onRenameTicket, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
+function Column({ column, columns, tickets, allTags, onRefresh, onDeleteTicket, onRenameTicket, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
   const [adding, setAdding] = useState(false)
 
   return (
@@ -12,7 +12,7 @@ function Column({ column, columns, tickets, departments, onRefresh, onDeleteTick
           key={ticket.id}
           ticket={ticket}
           columns={columns}
-          departments={departments}
+          allTags={allTags}
           onDelete={onDeleteTicket}
           onRename={onRenameTicket}
           onAddTag={onAddTag}
@@ -24,7 +24,7 @@ function Column({ column, columns, tickets, departments, onRefresh, onDeleteTick
       {adding
         ? <AddTicketForm
             column={column}
-            departments={departments}
+            allTags={allTags}
             onRefresh={onRefresh}
             onCancel={() => setAdding(false)}
           />

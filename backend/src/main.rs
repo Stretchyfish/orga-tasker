@@ -8,9 +8,8 @@ struct Company {
     name: String,
 }
 
-
 #[derive(serde::Serialize, sqlx::FromRow)]
-struct Department {
+struct Tag {
     id: i64,
     name: String,
 }
@@ -40,7 +39,7 @@ struct TicketRow {
 // --- Request body types ---
 
 #[derive(serde::Deserialize)]
-struct CreateDepartment {
+struct CreateTag {
     name: String,
 }
 
@@ -57,7 +56,7 @@ struct UpdateCompany {
 }
 
 #[derive(serde::Deserialize)]
-struct UpdateDepartment {
+struct UpdateTag {
     name: String,
 }
 
@@ -92,7 +91,7 @@ struct TicketResponse {
     title: String,
     description: Option<String>,
     position: i64,
-    departments: Vec<Department>,
+    tags: Vec<Tag>,
 }
 
 // --- Server setup ---
@@ -112,15 +111,15 @@ async fn main() {
 
     let app = axum::Router::new()
         .route("/", axum::routing::get(hello_handler))
-        .route("/departments", axum::routing::get(list_departments))
-        .route("/departments", axum::routing::post(create_department))
-        .route("/departments/:id", axum::routing::patch(rename_department).delete(delete_department))
+        .route("/tags", axum::routing::get(list_tags).post(create_tag))
+        .route("/tags/:id", axum::routing::patch(rename_tag).delete(delete_tag))
         .route("/boards", axum::routing::get(list_boards))
         .route("/boards/:id", axum::routing::get(get_board))
+        .route("/boards/:id/swimlanes", axum::routing::get(get_board_swimlanes))
+        .route("/boards/:id/swimlanes/:tag_id", axum::routing::post(add_board_swimlane).delete(remove_board_swimlane))
         .route("/tickets", axum::routing::post(create_ticket))
         .route("/tickets/:id", axum::routing::patch(update_ticket).delete(delete_ticket))
-        .route("/tickets/:id/departments/:dept_id", axum::routing::post(tag_department))
-        .route("/tickets/:id/departments/:dept_id", axum::routing::delete(untag_department))
+        .route("/tickets/:id/tags/:tag_id", axum::routing::post(tag_ticket).delete(untag_ticket))
         .route("/tickets/:id/board", axum::routing::get(get_or_create_subboard))
         .route("/company", axum::routing::get(get_company).patch(update_company))
         .layer(CorsLayer::permissive())
@@ -145,14 +144,14 @@ async fn init_db(pool: &sqlx::SqlitePool) {
     .expect("Failed to create companies table");
 
     sqlx::query(
-        "CREATE TABLE IF NOT EXISTS departments (
+        "CREATE TABLE IF NOT EXISTS tags (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL
         )",
     )
     .execute(pool)
     .await
-    .expect("Failed to create departments table");
+    .expect("Failed to create tags table");
 
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS boards (
@@ -164,6 +163,17 @@ async fn init_db(pool: &sqlx::SqlitePool) {
     .execute(pool)
     .await
     .expect("Failed to create boards table");
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS board_swimlanes (
+            board_id INTEGER NOT NULL REFERENCES boards(id),
+            tag_id   INTEGER NOT NULL REFERENCES tags(id),
+            PRIMARY KEY (board_id, tag_id)
+        )",
+    )
+    .execute(pool)
+    .await
+    .expect("Failed to create board_swimlanes table");
 
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS columns (
@@ -191,15 +201,15 @@ async fn init_db(pool: &sqlx::SqlitePool) {
     .expect("Failed to create tickets table");
 
     sqlx::query(
-        "CREATE TABLE IF NOT EXISTS ticket_departments (
-            ticket_id     INTEGER NOT NULL REFERENCES tickets(id),
-            department_id INTEGER NOT NULL REFERENCES departments(id),
-            PRIMARY KEY (ticket_id, department_id)
+        "CREATE TABLE IF NOT EXISTS ticket_tags (
+            ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+            tag_id    INTEGER NOT NULL REFERENCES tags(id),
+            PRIMARY KEY (ticket_id, tag_id)
         )",
     )
     .execute(pool)
     .await
-    .expect("Failed to create ticket_departments table");
+    .expect("Failed to create ticket_tags table");
 
     let company_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM companies")
         .fetch_one(pool)
@@ -240,31 +250,107 @@ async fn hello_handler() -> &'static str {
     "Hello from orga-tasker!"
 }
 
-async fn list_departments(
+async fn list_tags(
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
-) -> axum::Json<Vec<Department>> {
-    let departments: Vec<Department> = sqlx::query_as("SELECT id, name FROM departments")
+) -> axum::Json<Vec<Tag>> {
+    let tags: Vec<Tag> = sqlx::query_as("SELECT id, name FROM tags")
         .fetch_all(&pool)
         .await
-        .expect("Failed to fetch departments");
-
-    axum::Json(departments)
+        .expect("Failed to fetch tags");
+    axum::Json(tags)
 }
 
-async fn create_department(
+async fn create_tag(
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
-    axum::Json(body): axum::Json<CreateDepartment>,
-) -> (axum::http::StatusCode, axum::Json<Department>) {
-    let id: i64 = sqlx::query_scalar("INSERT INTO departments (name) VALUES (?) RETURNING id")
+    axum::Json(body): axum::Json<CreateTag>,
+) -> (axum::http::StatusCode, axum::Json<Tag>) {
+    let id: i64 = sqlx::query_scalar("INSERT INTO tags (name) VALUES (?) RETURNING id")
         .bind(&body.name)
         .fetch_one(&pool)
         .await
-        .expect("Failed to insert department");
+        .expect("Failed to insert tag");
+    (axum::http::StatusCode::CREATED, axum::Json(Tag { id, name: body.name }))
+}
 
-    (
-        axum::http::StatusCode::CREATED,
-        axum::Json(Department { id, name: body.name }),
+async fn rename_tag(
+    axum::extract::Path(tag_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+    axum::Json(body): axum::Json<UpdateTag>,
+) -> axum::http::StatusCode {
+    if body.name.trim().is_empty() {
+        return axum::http::StatusCode::UNPROCESSABLE_ENTITY;
+    }
+    sqlx::query("UPDATE tags SET name = ? WHERE id = ?")
+        .bind(&body.name)
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to rename tag");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn delete_tag(
+    axum::extract::Path(tag_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("DELETE FROM ticket_tags WHERE tag_id = ?")
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove ticket tags");
+    sqlx::query("DELETE FROM board_swimlanes WHERE tag_id = ?")
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove swimlane entries");
+    sqlx::query("DELETE FROM tags WHERE id = ?")
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to delete tag");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn get_board_swimlanes(
+    axum::extract::Path(board_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::Json<Vec<Tag>> {
+    let tags: Vec<Tag> = sqlx::query_as(
+        "SELECT t.id, t.name FROM tags t
+         JOIN board_swimlanes bs ON bs.tag_id = t.id
+         WHERE bs.board_id = ?",
     )
+    .bind(board_id)
+    .fetch_all(&pool)
+    .await
+    .expect("Failed to fetch board swimlanes");
+    axum::Json(tags)
+}
+
+async fn add_board_swimlane(
+    axum::extract::Path((board_id, tag_id)): axum::extract::Path<(i64, i64)>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("INSERT OR IGNORE INTO board_swimlanes (board_id, tag_id) VALUES (?, ?)")
+        .bind(board_id)
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to add swimlane");
+    axum::http::StatusCode::NO_CONTENT
+}
+
+async fn remove_board_swimlane(
+    axum::extract::Path((board_id, tag_id)): axum::extract::Path<(i64, i64)>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("DELETE FROM board_swimlanes WHERE board_id = ? AND tag_id = ?")
+        .bind(board_id)
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove swimlane");
+    axum::http::StatusCode::NO_CONTENT
 }
 
 async fn list_boards(
@@ -275,7 +361,6 @@ async fn list_boards(
             .fetch_all(&pool)
             .await
             .expect("Failed to fetch boards");
-
     axum::Json(boards)
 }
 
@@ -316,23 +401,22 @@ async fn get_board(
 
         let mut tickets = Vec::new();
         for ticket in ticket_rows {
-            let departments: Vec<Department> = sqlx::query_as(
-                "SELECT d.id, d.name
-                 FROM departments d
-                 JOIN ticket_departments td ON td.department_id = d.id
-                 WHERE td.ticket_id = ?",
+            let tags: Vec<Tag> = sqlx::query_as(
+                "SELECT t.id, t.name FROM tags t
+                 JOIN ticket_tags tt ON tt.tag_id = t.id
+                 WHERE tt.ticket_id = ?",
             )
             .bind(ticket.id)
             .fetch_all(&pool)
             .await
-            .expect("Failed to fetch ticket departments");
+            .expect("Failed to fetch ticket tags");
 
             tickets.push(TicketResponse {
                 id: ticket.id,
                 title: ticket.title,
                 description: ticket.description,
                 position: ticket.position,
-                departments,
+                tags,
             });
         }
 
@@ -381,7 +465,7 @@ async fn create_ticket(
             title: body.title,
             description: body.description,
             position,
-            departments: vec![],
+            tags: vec![],
         }),
     )
 }
@@ -430,59 +514,73 @@ async fn update_ticket(
         None => return Err(axum::http::StatusCode::NOT_FOUND),
     };
 
-    let departments: Vec<Department> = sqlx::query_as(
-        "SELECT d.id, d.name FROM departments d
-         JOIN ticket_departments td ON td.department_id = d.id
-         WHERE td.ticket_id = ?",
+    let tags: Vec<Tag> = sqlx::query_as(
+        "SELECT t.id, t.name FROM tags t
+         JOIN ticket_tags tt ON tt.tag_id = t.id
+         WHERE tt.ticket_id = ?",
     )
     .bind(ticket_id)
     .fetch_all(&pool)
     .await
-    .expect("Failed to fetch ticket departments");
+    .expect("Failed to fetch ticket tags");
 
     Ok(axum::Json(TicketResponse {
         id: ticket.id,
         title: ticket.title,
         description: ticket.description,
         position: ticket.position,
-        departments,
+        tags,
     }))
 }
 
-async fn tag_department(
-    axum::extract::Path((ticket_id, dept_id)): axum::extract::Path<(i64, i64)>,
+async fn tag_ticket(
+    axum::extract::Path((ticket_id, tag_id)): axum::extract::Path<(i64, i64)>,
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
 ) -> axum::http::StatusCode {
     let result = sqlx::query(
-        "INSERT OR IGNORE INTO ticket_departments (ticket_id, department_id) VALUES (?, ?)",
+        "INSERT OR IGNORE INTO ticket_tags (ticket_id, tag_id) VALUES (?, ?)",
     )
     .bind(ticket_id)
-    .bind(dept_id)
+    .bind(tag_id)
     .execute(&pool)
     .await;
 
     match result {
         Ok(_) => axum::http::StatusCode::NO_CONTENT,
         Err(e) => {
-            eprintln!("tag_department failed (ticket={ticket_id}, dept={dept_id}): {e}");
+            eprintln!("tag_ticket failed (ticket={ticket_id}, tag={tag_id}): {e}");
             axum::http::StatusCode::UNPROCESSABLE_ENTITY
         }
     }
 }
 
-async fn untag_department(
-    axum::extract::Path((ticket_id, dept_id)): axum::extract::Path<(i64, i64)>,
+async fn untag_ticket(
+    axum::extract::Path((ticket_id, tag_id)): axum::extract::Path<(i64, i64)>,
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
 ) -> axum::http::StatusCode {
-    sqlx::query(
-        "DELETE FROM ticket_departments WHERE ticket_id = ? AND department_id = ?",
-    )
-    .bind(ticket_id)
-    .bind(dept_id)
-    .execute(&pool)
-    .await
-    .expect("Failed to untag department");
+    sqlx::query("DELETE FROM ticket_tags WHERE ticket_id = ? AND tag_id = ?")
+        .bind(ticket_id)
+        .bind(tag_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to untag ticket");
+    axum::http::StatusCode::NO_CONTENT
+}
 
+async fn delete_ticket(
+    axum::extract::Path(ticket_id): axum::extract::Path<i64>,
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> axum::http::StatusCode {
+    sqlx::query("DELETE FROM ticket_tags WHERE ticket_id = ?")
+        .bind(ticket_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to remove ticket tags");
+    sqlx::query("DELETE FROM tickets WHERE id = ?")
+        .bind(ticket_id)
+        .execute(&pool)
+        .await
+        .expect("Failed to delete ticket");
     axum::http::StatusCode::NO_CONTENT
 }
 
@@ -510,26 +608,20 @@ async fn get_or_create_subboard(
             .expect("Failed to create subboard");
 
             for (pos, name) in ["To Do", "In Progress", "Done"].iter().enumerate() {
-                sqlx::query(
-                    "INSERT INTO columns (board_id, name, position) VALUES (?, ?, ?)",
-                )
-                .bind(new_id)
-                .bind(name)
-                .bind(pos as i64)
-                .execute(&pool)
-                .await
-                .expect("Failed to seed subboard column");
+                sqlx::query("INSERT INTO columns (board_id, name, position) VALUES (?, ?, ?)")
+                    .bind(new_id)
+                    .bind(name)
+                    .bind(pos as i64)
+                    .execute(&pool)
+                    .await
+                    .expect("Failed to seed subboard column");
             }
 
             new_id
         }
     };
 
-    get_board(
-        axum::extract::Path(board_id),
-        axum::extract::State(pool),
-    )
-    .await
+    get_board(axum::extract::Path(board_id), axum::extract::State(pool)).await
 }
 
 async fn get_company(
@@ -539,7 +631,6 @@ async fn get_company(
         .fetch_optional(&pool)
         .await
         .expect("Failed to fetch company");
-
     match company {
         Some(c) => Ok(axum::Json(c)),
         None => Err(axum::http::StatusCode::NOT_FOUND),
@@ -553,63 +644,10 @@ async fn update_company(
     if body.name.trim().is_empty() {
         return Err(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
     }
-
     sqlx::query("UPDATE companies SET name = ? WHERE id = 1")
         .bind(&body.name)
         .execute(&pool)
         .await
         .expect("Failed to update company name");
-
     Ok(axum::Json(Company { id: 1, name: body.name }))
-}
-
-async fn rename_department(
-    axum::extract::Path(dept_id): axum::extract::Path<i64>,
-    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
-    axum::Json(body): axum::Json<UpdateDepartment>,
-) -> axum::http::StatusCode {
-    if body.name.trim().is_empty() {
-        return axum::http::StatusCode::UNPROCESSABLE_ENTITY;
-    }
-    sqlx::query("UPDATE departments SET name = ? WHERE id = ?")
-        .bind(&body.name)
-        .bind(dept_id)
-        .execute(&pool)
-        .await
-        .expect("Failed to rename department");
-    axum::http::StatusCode::NO_CONTENT
-}
-
-async fn delete_department(
-    axum::extract::Path(dept_id): axum::extract::Path<i64>,
-    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
-) -> axum::http::StatusCode {
-    sqlx::query("DELETE FROM ticket_departments WHERE department_id = ?")
-        .bind(dept_id)
-        .execute(&pool)
-        .await
-        .expect("Failed to remove department tags");
-    sqlx::query("DELETE FROM departments WHERE id = ?")
-        .bind(dept_id)
-        .execute(&pool)
-        .await
-        .expect("Failed to delete department");
-    axum::http::StatusCode::NO_CONTENT
-}
-
-async fn delete_ticket(
-    axum::extract::Path(ticket_id): axum::extract::Path<i64>,
-    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
-) -> axum::http::StatusCode {
-    sqlx::query("DELETE FROM ticket_departments WHERE ticket_id = ?")
-        .bind(ticket_id)
-        .execute(&pool)
-        .await
-        .expect("Failed to remove ticket tags");
-    sqlx::query("DELETE FROM tickets WHERE id = ?")
-        .bind(ticket_id)
-        .execute(&pool)
-        .await
-        .expect("Failed to delete ticket");
-    axum::http::StatusCode::NO_CONTENT
 }

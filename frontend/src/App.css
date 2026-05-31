@@ -57,6 +57,58 @@ body {
   min-width: 600px;
 }
 
+/* Parent ticket header (when viewing sub-board) */
+.parent-ticket-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #eee;
+}
+
+.parent-ticket-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parent-ticket-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.parent-ticket-title:hover {
+  color: #3b5bdb;
+}
+
+.parent-ticket-title-input {
+  font-size: 24px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid #3b5bdb;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding-bottom: 4px;
+}
+
+.parent-ticket-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  color: #aaa;
+  border-radius: 4px;
+}
+
+.parent-ticket-edit-btn:hover {
+  background: #f0f0f0;
+  color: #3b5bdb;
+}
+
 .board-column-headers {
   display: flex;
   margin-bottom: 4px;
@@ -226,7 +278,13 @@ body {
   cursor: pointer;
 }
 
-.ticket-departments {
+.ticket-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ticket-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -269,6 +327,60 @@ body {
   cursor: pointer;
 }
 
+/* Custom multi-select dropdown (tags) */
+.tag-multi-select {
+  position: relative;
+}
+
+.tag-multi-select-btn {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.tag-multi-select-btn:hover {
+  border-color: #aaa;
+}
+
+.tag-multi-select-arrow {
+  font-size: 10px;
+  color: #888;
+}
+
+.tag-multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 10;
+  padding: 4px 0;
+}
+
+.tag-multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tag-multi-select-option:hover {
+  background: #f5f5f5;
+}
+
 /* Swimlane label editing */
 .swimlane-label-content {
   display: flex;
@@ -296,6 +408,13 @@ body {
   width: 100%;
 }
 
+.swimlane-label-buttons {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.swimlane-remove-swimlane-btn,
 .swimlane-delete-btn {
   background: none;
   border: none;
@@ -303,7 +422,10 @@ body {
   cursor: pointer;
   font-size: 12px;
   padding: 0;
-  flex-shrink: 0;
+}
+
+.swimlane-remove-swimlane-btn:hover {
+  color: #ff9500;
 }
 
 .swimlane-delete-btn:hover {
@@ -311,13 +433,21 @@ body {
 }
 
 /* Add department form */
-.add-dept-form {
+/* Board controls */
+.board-controls {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.add-dept-form input {
+.add-tag-form {
+  display: flex;
+  gap: 8px;
+}
+
+.add-tag-form input {
   padding: 6px 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -325,13 +455,85 @@ body {
   width: 200px;
 }
 
-.add-dept-form button {
+.add-tag-form button {
   padding: 6px 12px;
   background: #3b5bdb;
   color: white;
   border: none;
   border-radius: 4px;
   font-size: 13px;
+  cursor: pointer;
+}
+
+/* Swimlane selector dropdown */
+.swimlane-selector {
+  position: relative;
+}
+
+.swimlane-selector-btn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swimlane-selector-btn:hover {
+  border-color: #aaa;
+  background: #f5f5f5;
+}
+
+.swimlane-selector-arrow {
+  font-size: 10px;
+  color: #888;
+}
+
+.swimlane-selector-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 10;
+  padding: 4px 0;
+  min-width: 150px;
+}
+
+.swimlane-selector-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  border: none;
+  background: white;
+  font-size: 12px;
+  color: #444;
+  cursor: pointer;
+}
+
+.swimlane-selector-option:hover {
+  background: #f5f5f5;
+}
+
+/* Show untagged toggle */
+.show-untagged-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+}
+
+.show-untagged-toggle input[type="checkbox"] {
   cursor: pointer;
 }
 

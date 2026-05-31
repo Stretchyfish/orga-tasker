@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import DeptMultiSelect from './DeptMultiSelect'
+import TagMultiSelect from './TagMultiSelect'
 
-function AddTicketForm({ column, departments, onRefresh, onCancel }) {
+function AddTicketForm({ column, allTags, onRefresh, onCancel }) {
   const [title, setTitle] = useState('')
-  const [selectedDepts, setSelectedDepts] = useState([])
+  const [selectedTags, setSelectedTags] = useState([])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -17,8 +17,8 @@ function AddTicketForm({ column, departments, onRefresh, onCancel }) {
     const ticket = await res.json()
 
     await Promise.all(
-      selectedDepts.map(deptId =>
-        fetch(`http://localhost:3000/tickets/${ticket.id}/departments/${deptId}`, {
+      selectedTags.map(tagId =>
+        fetch(`http://localhost:3000/tickets/${ticket.id}/tags/${tagId}`, {
           method: 'POST',
         })
       )
@@ -36,11 +36,11 @@ function AddTicketForm({ column, departments, onRefresh, onCancel }) {
         placeholder="Ticket title"
         autoFocus
       />
-      {departments.length > 0 && (
-        <DeptMultiSelect
-          departments={departments}
-          selectedDepts={selectedDepts}
-          onChange={setSelectedDepts}
+      {allTags.length > 0 && (
+        <TagMultiSelect
+          tags={allTags}
+          selectedTags={selectedTags}
+          onChange={setSelectedTags}
         />
       )}
       <div className="add-ticket-form-actions">

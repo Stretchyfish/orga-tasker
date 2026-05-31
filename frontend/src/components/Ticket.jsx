@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Ticket({ ticket, columns, departments, onOpen, onMove, onDelete, onRename, onAddTag, onRemoveTag }) {
+function Ticket({ ticket, columns, allTags, onOpen, onMove, onDelete, onRename, onAddTag, onRemoveTag }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
 
@@ -28,7 +28,7 @@ function Ticket({ ticket, columns, departments, onOpen, onMove, onDelete, onRena
     }
   }
 
-  const untaggedDepts = departments.filter(d => !ticket.departments.includes(d.name))
+  const untaggedTags = allTags.filter(t => !ticket.tags.includes(t.name))
 
   return (
     <div className="ticket">
@@ -43,12 +43,12 @@ function Ticket({ ticket, columns, departments, onOpen, onMove, onDelete, onRena
             autoFocus
           />
         ) : (
-          <span className="ticket-title" onClick={startEditing} title="Click to rename">
+          <span className="ticket-title" onClick={() => onOpen(ticket.id, ticket.title)} title="Click to open sub-board">
             {ticket.title}
           </span>
         )}
         <div className="ticket-actions">
-          <button className="ticket-open-btn" onClick={() => onOpen(ticket.id, ticket.title)} title="Open sub-board">→</button>
+          <button className="ticket-open-btn" onClick={startEditing} title="Rename ticket">✎</button>
           <button className="ticket-delete-btn" onClick={handleDelete} title="Delete ticket">✕</button>
         </div>
       </div>
@@ -63,19 +63,19 @@ function Ticket({ ticket, columns, departments, onOpen, onMove, onDelete, onRena
         ))}
       </select>
 
-      <div className="ticket-departments">
-        {ticket.departments.map(deptName => {
-          const dept = departments.find(d => d.name === deptName)
+      <div className="ticket-tags">
+        {ticket.tags.map(tagName => {
+          const tag = allTags.find(t => t.name === tagName)
           return (
-            <span key={deptName} className="ticket-tag">
-              {deptName}
-              {dept && (
-                <button className="tag-remove-btn" onClick={() => onRemoveTag(ticket.id, dept.id)}>✕</button>
+            <span key={tagName} className="ticket-tag">
+              {tagName}
+              {tag && (
+                <button className="tag-remove-btn" onClick={() => onRemoveTag(ticket.id, tag.id)}>✕</button>
               )}
             </span>
           )
         })}
-        {untaggedDepts.length > 0 && (
+        {untaggedTags.length > 0 && (
           <select
             className="tag-add-select"
             value=""
@@ -84,8 +84,8 @@ function Ticket({ ticket, columns, departments, onOpen, onMove, onDelete, onRena
             }}
           >
             <option value="">+ tag</option>
-            {untaggedDepts.map(d => (
-              <option key={d.id} value={d.id}>{d.name}</option>
+            {untaggedTags.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>
         )}

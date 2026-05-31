@@ -6,9 +6,11 @@ import './App.css'
 
 function App() {
   const [companyName, setCompanyName] = useState('Loading...')
-  const [departments, setDepartments] = useState([])
+  const [allTags, setAllTags] = useState([])
   const [columns, setColumns] = useState([])
   const [tickets, setTickets] = useState([])
+  const [swimlaneTags, setSwimlaneTags] = useState([])
+  const [showUntagged, setShowUntagged] = useState(true)
   const [boardStack, setBoardStack] = useState([{ id: 1, label: 'Main Board' }])
 
   const currentBoardId = boardStack[boardStack.length - 1].id
@@ -18,9 +20,13 @@ function App() {
       .then(res => res.json())
       .then(data => setCompanyName(data.name))
 
-    fetch('http://localhost:3000/departments')
+    fetch('http://localhost:3000/tags')
       .then(res => res.json())
-      .then(setDepartments)
+      .then(setAllTags)
+
+    fetch(`http://localhost:3000/boards/${boardId}/swimlanes`)
+      .then(res => res.json())
+      .then(setSwimlaneTags)
 
     fetch(`http://localhost:3000/boards/${boardId}`)
       .then(res => res.json())
@@ -33,7 +39,7 @@ function App() {
               title: ticket.title,
               columnId: col.id,
               columnName: col.name,
-              departments: ticket.departments.map(d => d.name),
+              tags: ticket.tags.map(t => t.name),
             }))
           )
         )
@@ -67,13 +73,13 @@ function App() {
     loadData(currentBoardId)
   }
 
-  async function deleteDepartment(deptId) {
-    await fetch(`http://localhost:3000/departments/${deptId}`, { method: 'DELETE' })
+  async function deleteTag(tagId) {
+    await fetch(`http://localhost:3000/tags/${tagId}`, { method: 'DELETE' })
     loadData(currentBoardId)
   }
 
-  async function renameDepartment(deptId, name) {
-    await fetch(`http://localhost:3000/departments/${deptId}`, {
+  async function renameTag(tagId, name) {
+    await fetch(`http://localhost:3000/tags/${tagId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
@@ -81,13 +87,13 @@ function App() {
     loadData(currentBoardId)
   }
 
-  async function addTag(ticketId, deptId) {
-    await fetch(`http://localhost:3000/tickets/${ticketId}/departments/${deptId}`, { method: 'POST' })
+  async function addTag(ticketId, tagId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}/tags/${tagId}`, { method: 'POST' })
     loadData(currentBoardId)
   }
 
-  async function removeTag(ticketId, deptId) {
-    await fetch(`http://localhost:3000/tickets/${ticketId}/departments/${deptId}`, { method: 'DELETE' })
+  async function removeTag(ticketId, tagId) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}/tags/${tagId}`, { method: 'DELETE' })
     loadData(currentBoardId)
   }
 
@@ -100,10 +106,20 @@ function App() {
     loadData(currentBoardId)
   }
 
+  async function addBoardSwimlane(tagId) {
+    await fetch(`http://localhost:3000/boards/${currentBoardId}/swimlanes/${tagId}`, { method: 'POST' })
+    loadData(currentBoardId)
+  }
+
+  async function removeBoardSwimlane(tagId) {
+    await fetch(`http://localhost:3000/boards/${currentBoardId}/swimlanes/${tagId}`, { method: 'DELETE' })
+    loadData(currentBoardId)
+  }
+
   async function openTicketBoard(ticketId, ticketTitle) {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
-    setBoardStack(prev => [...prev, { id: board.id, label: ticketTitle }])
+    setBoardStack(prev => [...prev, { id: board.id, label: ticketTitle, ticketId }])
   }
 
   function navigateTo(index) {
@@ -116,17 +132,23 @@ function App() {
       <main className="main">
         <Breadcrumb stack={boardStack} onNavigate={navigateTo} />
         <Board
-          departments={departments}
+          parentTicket={boardStack.length > 1 ? boardStack[boardStack.length - 1] : null}
+          allTags={allTags}
+          swimlaneTags={swimlaneTags}
           columns={columns}
           tickets={tickets}
+          showUntagged={showUntagged}
           onRefresh={() => loadData(currentBoardId)}
           onDeleteTicket={deleteTicket}
           onRenameTicket={renameTicket}
-          onDeleteDept={deleteDepartment}
-          onRenameDept={renameDepartment}
+          onDeleteTag={deleteTag}
+          onRenameTag={renameTag}
           onAddTag={addTag}
           onRemoveTag={removeTag}
           onMoveTicket={moveTicket}
+          onAddSwimlane={addBoardSwimlane}
+          onRemoveSwimlane={removeBoardSwimlane}
+          onToggleUntagged={() => setShowUntagged(s => !s)}
           onOpenTicket={openTicketBoard}
         />
       </main>

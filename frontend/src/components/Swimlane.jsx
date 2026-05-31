@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import Column from './Column'
 
-function Swimlane({ department, columns, tickets, departments, onRefresh, onDeleteTicket, onRenameTicket, onDeleteDept, onRenameDept, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
+function Swimlane({ tag, columns, tickets, allTags, onRefresh, onDeleteTicket, onRenameTicket, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onRemoveSwimlane, onOpenTicket }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
 
   function startEditing() {
-    setDraft(department.name)
+    setDraft(tag.name)
     setEditing(true)
   }
 
   async function saveName() {
     const name = draft.trim()
-    if (name && name !== department.name) {
-      await onRenameDept(department.id, name)
+    if (name && name !== tag.name) {
+      await onRenameTag(tag.id, name)
     }
     setEditing(false)
   }
@@ -24,15 +24,19 @@ function Swimlane({ department, columns, tickets, departments, onRefresh, onDele
   }
 
   function handleDelete() {
-    if (window.confirm(`Delete department "${department.name}"? This will remove it from all tickets.`)) {
-      onDeleteDept(department.id)
+    if (window.confirm(`Delete tag "${tag.name}"? This will remove it from all tickets.`)) {
+      onDeleteTag(tag.id)
     }
+  }
+
+  function handleRemoveSwimlane() {
+    onRemoveSwimlane(tag.id)
   }
 
   return (
     <div className="swimlane">
       <div className="swimlane-label">
-        {department ? (
+        {tag ? (
           <div className="swimlane-label-content">
             {editing ? (
               <input
@@ -44,12 +48,15 @@ function Swimlane({ department, columns, tickets, departments, onRefresh, onDele
                 autoFocus
               />
             ) : (
-              <span className="swimlane-label-name" onClick={startEditing}>{department.name}</span>
+              <span className="swimlane-label-name" onClick={startEditing}>{tag.name}</span>
             )}
-            <button className="swimlane-delete-btn" onClick={handleDelete}>✕</button>
+            <div className="swimlane-label-buttons">
+              <button className="swimlane-remove-swimlane-btn" onClick={handleRemoveSwimlane} title="Remove swimlane">−</button>
+              <button className="swimlane-delete-btn" onClick={handleDelete} title="Delete tag">✕</button>
+            </div>
           </div>
         ) : (
-          'Unassigned'
+          'Untagged'
         )}
       </div>
       <div className="swimlane-columns">
@@ -59,7 +66,7 @@ function Swimlane({ department, columns, tickets, departments, onRefresh, onDele
             column={col}
             columns={columns}
             tickets={tickets.filter(t => t.columnName === col.name)}
-            departments={departments}
+            allTags={allTags}
             onRefresh={onRefresh}
             onDeleteTicket={onDeleteTicket}
             onRenameTicket={onRenameTicket}
