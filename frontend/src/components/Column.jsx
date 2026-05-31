@@ -4,13 +4,57 @@ import AddTicketForm from './AddTicketForm'
 
 function Column({ column, columns, swimlaneTag, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
   const [adding, setAdding] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+
+  function handleDragOver(e) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver(true)
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault()
+    setDragOver(false)
+  }
+
+  async function handleDrop(e) {
+    e.preventDefault()
+    setDragOver(false)
+    const ticketId = parseInt(e.dataTransfer.getData('ticketId'))
+    const sourceColumnId = parseInt(e.dataTransfer.getData('sourceColumnId'))
+    const sourceSwimlaneTagId = e.dataTransfer.getData('sourceSwimlaneTagId')
+    const destSwimlaneTagId = swimlaneTag?.id || ''
+
+    // Handle swimlane tag changes
+    if (sourceSwimlaneTagId !== destSwimlaneTagId) {
+      // Remove source swimlane tag if it exists
+      if (sourceSwimlaneTagId) {
+        await onRemoveTag(ticketId, parseInt(sourceSwimlaneTagId))
+      }
+      // Add destination swimlane tag if it exists
+      if (destSwimlaneTagId) {
+        await onAddTag(ticketId, parseInt(destSwimlaneTagId))
+      }
+    }
+
+    // Handle column change
+    if (sourceColumnId !== column.id) {
+      onMoveTicket(ticketId, column.id)
+    }
+  }
 
   return (
-    <div className="column">
+    <div
+      className={`column ${dragOver ? 'drag-over' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {tickets.map(ticket => (
         <Ticket
           key={ticket.id}
           ticket={ticket}
+          swimlaneTag={swimlaneTag}
           columns={columns}
           allTags={allTags}
           progress={ticketProgress[ticket.id]}

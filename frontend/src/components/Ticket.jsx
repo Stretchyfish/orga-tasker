@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Ticket({ ticket, columns, allTags, progress, onOpen, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
+function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
@@ -44,8 +44,20 @@ function Ticket({ ticket, columns, allTags, progress, onOpen, onMove, onDelete, 
 
   const untaggedTags = allTags.filter(t => !ticket.tags.includes(t.name))
 
+  function handleDragStart(e) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('ticketId', ticket.id)
+    e.dataTransfer.setData('sourceColumnId', ticket.columnId)
+    e.dataTransfer.setData('sourceSwimlaneTagId', swimlaneTag?.id || '')
+    e.currentTarget.style.opacity = '0.5'
+  }
+
+  function handleDragEnd(e) {
+    e.currentTarget.style.opacity = '1'
+  }
+
   return (
-    <div className="ticket">
+    <div className="ticket" draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="ticket-header">
         {editing ? (
           <input
@@ -66,16 +78,6 @@ function Ticket({ ticket, columns, allTags, progress, onOpen, onMove, onDelete, 
           <button className="ticket-delete-btn" onClick={handleDelete} title="Delete ticket">✕</button>
         </div>
       </div>
-
-      <select
-        className="ticket-column-select"
-        value={ticket.columnId}
-        onChange={e => onMove(ticket.id, Number(e.target.value))}
-      >
-        {columns.map(col => (
-          <option key={col.id} value={col.id}>{col.name}</option>
-        ))}
-      </select>
 
       <div className="ticket-date">
         {editingDate ? (
