@@ -1,8 +1,10 @@
 import { useState } from 'react'
 
-function Ticket({ ticket, columns, allTags, onOpen, onMove, onDelete, onRename, onAddTag, onRemoveTag }) {
+function Ticket({ ticket, columns, allTags, progress, onOpen, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [editingDate, setEditingDate] = useState(false)
+  const [dateDraft, setDateDraft] = useState('')
 
   function startEditing() {
     setDraft(ticket.title)
@@ -26,6 +28,18 @@ function Ticket({ ticket, columns, allTags, onOpen, onMove, onDelete, onRename, 
     if (window.confirm(`Delete "${ticket.title}"?`)) {
       onDelete(ticket.id)
     }
+  }
+
+  function startEditingDate() {
+    setDateDraft(ticket.due_date || '')
+    setEditingDate(true)
+  }
+
+  async function saveDate() {
+    if (dateDraft !== (ticket.due_date || '')) {
+      await onUpdateDate(ticket.id, dateDraft || null)
+    }
+    setEditingDate(false)
   }
 
   const untaggedTags = allTags.filter(t => !ticket.tags.includes(t.name))
@@ -62,6 +76,39 @@ function Ticket({ ticket, columns, allTags, onOpen, onMove, onDelete, onRename, 
           <option key={col.id} value={col.id}>{col.name}</option>
         ))}
       </select>
+
+      <div className="ticket-date">
+        {editingDate ? (
+          <input
+            type="date"
+            className="ticket-date-input"
+            value={dateDraft}
+            onChange={e => setDateDraft(e.target.value)}
+            onBlur={saveDate}
+            autoFocus
+          />
+        ) : (
+          <span
+            className={`ticket-date-display ${ticket.due_date ? 'has-date' : 'no-date'}`}
+            onClick={startEditingDate}
+            title="Click to set date"
+          >
+            {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : 'No date'}
+          </span>
+        )}
+      </div>
+
+      {progress && (
+        <div className="ticket-progress-container">
+          <div className="ticket-progress-bar">
+            <div
+              className="ticket-progress-fill"
+              style={{ width: `${(progress.done / progress.total) * 100}%` }}
+            />
+          </div>
+          <div className="ticket-progress-text">{progress.done}/{progress.total}</div>
+        </div>
+      )}
 
       <div className="ticket-tags">
         {ticket.tags.map(tagName => {

@@ -109,6 +109,175 @@ body {
   color: #3b5bdb;
 }
 
+/* Parent ticket description */
+.parent-ticket-description-section {
+  margin-top: 12px;
+}
+
+.parent-ticket-description-container {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  background: #f9f9f9;
+  border: 1px dashed #ddd;
+  min-height: 40px;
+}
+
+.parent-ticket-description-container:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.parent-ticket-description {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.parent-ticket-description-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: #999;
+  font-style: italic;
+}
+
+.parent-ticket-description-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.parent-ticket-description-input {
+  width: 100%;
+  min-height: 100px;
+  font-size: 14px;
+  padding: 8px;
+  border: 1px solid #3b5bdb;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.parent-ticket-description-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.desc-save-btn,
+.desc-cancel-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.desc-save-btn {
+  background: #3b5bdb;
+  color: white;
+}
+
+.desc-save-btn:hover {
+  background: #2d46c4;
+}
+
+.desc-cancel-btn {
+  background: #f0f0f0;
+  color: #444;
+}
+
+.desc-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+/* Parent ticket date in sub-board header */
+.parent-ticket-date-section {
+  margin-top: 12px;
+}
+
+.parent-ticket-date-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.parent-ticket-date-input {
+  font-size: 14px;
+  padding: 6px 8px;
+  border: 1px solid #3b5bdb;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.parent-ticket-date-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.date-save-btn,
+.date-cancel-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.date-save-btn {
+  background: #3b5bdb;
+  color: white;
+}
+
+.date-save-btn:hover {
+  background: #2d46c4;
+}
+
+.date-cancel-btn {
+  background: #f0f0f0;
+  color: #444;
+}
+
+.date-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.parent-ticket-date-container {
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.parent-ticket-date-container:hover {
+  opacity: 0.8;
+}
+
+.parent-ticket-date {
+  margin: 0;
+  font-size: 12px;
+  background: #e8f0fe;
+  color: #3b5bdb;
+  padding: 4px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.parent-ticket-date-placeholder {
+  margin: 0;
+  font-size: 12px;
+  background: #f5f5f5;
+  color: #999;
+  padding: 4px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  font-style: italic;
+}
+
 .board-column-headers {
   display: flex;
   margin-bottom: 4px;
@@ -275,6 +444,71 @@ body {
   border-radius: 3px;
   padding: 2px 4px;
   margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.ticket-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.ticket-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ticket-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b5bdb, #5a7dee);
+  transition: width 0.3s ease;
+}
+
+.ticket-progress-text {
+  font-size: 10px;
+  color: #666;
+  white-space: nowrap;
+  min-width: 30px;
+  text-align: right;
+}
+
+.ticket-date {
+  margin-bottom: 5px;
+}
+
+.ticket-date-display {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.ticket-date-display.has-date {
+  background: #e8f0fe;
+  color: #3b5bdb;
+}
+
+.ticket-date-display.no-date {
+  background: #f5f5f5;
+  color: #999;
+  font-style: italic;
+}
+
+.ticket-date-display:hover {
+  opacity: 0.8;
+}
+
+.ticket-date-input {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #3b5bdb;
+  border-radius: 3px;
+  outline: none;
   cursor: pointer;
 }
 

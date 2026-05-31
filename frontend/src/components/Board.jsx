@@ -1,29 +1,95 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Swimlane from './Swimlane'
 import AddTagForm from './AddTagForm'
 import SwimlaneSelector from './SwimlaneSelector'
 
-function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onToggleUntagged, onOpenTicket }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
+function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onToggleUntagged, onOpenTicket }) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [descDraft, setDescDraft] = useState('')
+  const [editingDate, setEditingDate] = useState(false)
+  const [dateDraft, setDateDraft] = useState('')
+  const [ticketProgress, setTicketProgress] = useState({})
 
-  function startEditing() {
-    setDraft(parentTicket.label)
-    setEditing(true)
+  function startEditingTitle() {
+    setTitleDraft(parentTicket.label)
+    setEditingTitle(true)
   }
 
   async function saveTitle() {
-    const title = draft.trim()
+    const title = titleDraft.trim()
     if (title && title !== parentTicket.label) {
       await onRenameTicket(parentTicket.ticketId, title)
     }
-    setEditing(false)
+    setEditingTitle(false)
   }
 
-  function handleKeyDown(e) {
+  function handleTitleKeyDown(e) {
     if (e.key === 'Enter') saveTitle()
-    if (e.key === 'Escape') setEditing(false)
+    if (e.key === 'Escape') setEditingTitle(false)
   }
+
+  function startEditingDesc() {
+    setDescDraft(parentTicket.description || '')
+    setEditingDesc(true)
+  }
+
+  async function saveDesc() {
+    const desc = descDraft.trim()
+    if (desc !== (parentTicket.description || '')) {
+      await onUpdateDescription(parentTicket.ticketId, desc)
+    }
+    setEditingDesc(false)
+  }
+
+  function handleDescKeyDown(e) {
+    if (e.key === 'Escape') setEditingDesc(false)
+  }
+
+  function startEditingDate() {
+    setDateDraft(parentTicket.due_date || '')
+    setEditingDate(true)
+  }
+
+  async function saveDate() {
+    const date = dateDraft
+    if (date !== (parentTicket.due_date || '')) {
+      await onUpdateDate(parentTicket.ticketId, date || null)
+    }
+    setEditingDate(false)
+  }
+
+  function handleDateKeyDown(e) {
+    if (e.key === 'Escape') setEditingDate(false)
+  }
+
+  useEffect(() => {
+    async function fetchProgress() {
+      const progress = {}
+      for (const ticket of tickets) {
+        try {
+          const res = await fetch(`http://localhost:3000/tickets/${ticket.id}/board`)
+          const board = await res.json()
+          const doneColumn = board.columns.find(col => col.name.toLowerCase() === 'done')
+          if (doneColumn) {
+            const doneTickets = doneColumn.tickets.length
+            const totalTickets = board.columns.reduce((sum, col) => sum + col.tickets.length, 0)
+            if (totalTickets > 0) {
+              progress[ticket.id] = { done: doneTickets, total: totalTickets }
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch progress for ticket ${ticket.id}:`, err)
+        }
+      }
+      setTicketProgress(progress)
+    }
+    if (tickets.length > 0) {
+      fetchProgress()
+    }
+  }, [tickets])
+
   const untagged = tickets.filter(t => t.tags.length === 0)
   const availableForSwimlane = allTags.filter(tag => !swimlaneTags.some(s => s.id === tag.id))
 
@@ -31,23 +97,76 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
     <div className="board">
       {parentTicket && (
         <div className="parent-ticket-header">
-          {editing ? (
+          {editingTitle ? (
             <input
               className="parent-ticket-title-input"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
+              value={titleDraft}
+              onChange={e => setTitleDraft(e.target.value)}
               onBlur={saveTitle}
-              onKeyDown={handleKeyDown}
+              onKeyDown={handleTitleKeyDown}
               autoFocus
             />
           ) : (
             <div className="parent-ticket-title-container">
-              <h2 className="parent-ticket-title" onClick={startEditing} title="Click to edit">
+              <h2 className="parent-ticket-title" onClick={startEditingTitle} title="Click to edit">
                 {parentTicket.label}
               </h2>
-              <button className="parent-ticket-edit-btn" onClick={startEditing} title="Edit title">✎</button>
+              <button className="parent-ticket-edit-btn" onClick={startEditingTitle} title="Edit title">✎</button>
             </div>
           )}
+          <div className="parent-ticket-description-section">
+            {editingDesc ? (
+              <div className="parent-ticket-description-edit">
+                <textarea
+                  className="parent-ticket-description-input"
+                  value={descDraft}
+                  onChange={e => setDescDraft(e.target.value)}
+                  onKeyDown={handleDescKeyDown}
+                  placeholder="Add a description..."
+                  autoFocus
+                />
+                <div className="parent-ticket-description-actions">
+                  <button className="desc-save-btn" onClick={saveDesc}>Save</button>
+                  <button className="desc-cancel-btn" onClick={() => setEditingDesc(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="parent-ticket-description-container" onClick={startEditingDesc}>
+                {parentTicket.description ? (
+                  <p className="parent-ticket-description">{parentTicket.description}</p>
+                ) : (
+                  <p className="parent-ticket-description-placeholder">Click to add a description</p>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="parent-ticket-date-section">
+            {editingDate ? (
+              <div className="parent-ticket-date-edit">
+                <input
+                  type="date"
+                  className="parent-ticket-date-input"
+                  value={dateDraft}
+                  onChange={e => setDateDraft(e.target.value)}
+                  onBlur={saveDate}
+                  onKeyDown={handleDateKeyDown}
+                  autoFocus
+                />
+                <div className="parent-ticket-date-actions">
+                  <button className="date-save-btn" onClick={saveDate}>Save</button>
+                  <button className="date-cancel-btn" onClick={() => setEditingDate(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="parent-ticket-date-container" onClick={startEditingDate}>
+                {parentTicket.due_date ? (
+                  <p className="parent-ticket-date">{new Date(parentTicket.due_date).toLocaleDateString()}</p>
+                ) : (
+                  <p className="parent-ticket-date-placeholder">Click to add a date</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
       <div className="board-controls">
@@ -77,9 +196,11 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
           columns={columns}
           tickets={tickets.filter(t => t.tags.includes(tag.name))}
           allTags={allTags}
+          ticketProgress={ticketProgress}
           onRefresh={onRefresh}
           onDeleteTicket={onDeleteTicket}
           onRenameTicket={onRenameTicket}
+          onUpdateDate={onUpdateDate}
           onDeleteTag={onDeleteTag}
           onRenameTag={onRenameTag}
           onAddTag={onAddTag}
@@ -97,9 +218,11 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
           columns={columns}
           tickets={untagged}
           allTags={allTags}
+          ticketProgress={ticketProgress}
           onRefresh={onRefresh}
           onDeleteTicket={onDeleteTicket}
           onRenameTicket={onRenameTicket}
+          onUpdateDate={onUpdateDate}
           onDeleteTag={onDeleteTag}
           onRenameTag={onRenameTag}
           onAddTag={onAddTag}

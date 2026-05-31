@@ -40,6 +40,7 @@ function App() {
               columnId: col.id,
               columnName: col.name,
               tags: ticket.tags.map(t => t.name),
+              due_date: ticket.due_date,
             }))
           )
         )
@@ -119,7 +120,39 @@ function App() {
   async function openTicketBoard(ticketId, ticketTitle) {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
-    setBoardStack(prev => [...prev, { id: board.id, label: ticketTitle, ticketId }])
+    const currentTicket = tickets.find(t => t.id === ticketId)
+    setBoardStack(prev => [...prev, { id: board.id, label: ticketTitle, ticketId, description: currentTicket?.description || '' }])
+  }
+
+  async function updateTicketDescription(ticketId, description) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description }),
+    })
+    // Update the boardStack with the new description
+    setBoardStack(prev =>
+      prev.map((item, idx) =>
+        idx === prev.length - 1 ? { ...item, description } : item
+      )
+    )
+  }
+
+  async function updateTicketDate(ticketId, due_date) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ due_date }),
+    })
+    setTickets(prev =>
+      prev.map(t => t.id === ticketId ? { ...t, due_date } : t)
+    )
+    // Update boardStack if this is the current parent ticket
+    setBoardStack(prev =>
+      prev.map((item, idx) =>
+        item.ticketId === ticketId ? { ...item, due_date } : item
+      )
+    )
   }
 
   function navigateTo(index) {
@@ -141,6 +174,8 @@ function App() {
           onRefresh={() => loadData(currentBoardId)}
           onDeleteTicket={deleteTicket}
           onRenameTicket={renameTicket}
+          onUpdateDescription={updateTicketDescription}
+          onUpdateDate={updateTicketDate}
           onDeleteTag={deleteTag}
           onRenameTag={renameTag}
           onAddTag={addTag}

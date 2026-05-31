@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Ticket from './Ticket'
 import AddTicketForm from './AddTicketForm'
 
-function Column({ column, columns, tickets, allTags, onRefresh, onDeleteTicket, onRenameTicket, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
+function Column({ column, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
   const [adding, setAdding] = useState(false)
 
   return (
@@ -13,8 +13,10 @@ function Column({ column, columns, tickets, allTags, onRefresh, onDeleteTicket, 
           ticket={ticket}
           columns={columns}
           allTags={allTags}
+          progress={ticketProgress[ticket.id]}
           onDelete={onDeleteTicket}
           onRename={onRenameTicket}
+          onUpdateDate={onUpdateDate}
           onAddTag={onAddTag}
           onRemoveTag={onRemoveTag}
           onMove={onMoveTicket}
