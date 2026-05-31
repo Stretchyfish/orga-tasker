@@ -2,13 +2,13 @@ import { useState } from 'react'
 import Ticket from './Ticket'
 import AddTicketForm from './AddTicketForm'
 
-function Column({ column, tickets, departments, defaultDeptId, onRefresh }) {
+function Column({ column, tickets, departments, defaultDeptId, onRefresh, onOpenTicket }) {
   const [adding, setAdding] = useState(false)
 
   return (
     <div className="column">
       {tickets.map(ticket => (
-        <Ticket key={ticket.id} ticket={ticket} />
+        <Ticket key={ticket.id} ticket={ticket} onOpen={onOpenTicket} />
       ))}
       {adding
         ? <AddTicketForm

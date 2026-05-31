@@ -1,6 +1,6 @@
 import Column from './Column'
 
-function Swimlane({ department, columns, tickets, departments, onRefresh }) {
+function Swimlane({ department, columns, tickets, departments, onRefresh, onOpenTicket }) {
   return (
     <div className="swimlane">
       <div className="swimlane-label">
@@ -15,6 +15,7 @@ function Swimlane({ department, columns, tickets, departments, onRefresh }) {
             departments={departments}
             defaultDeptId={department ? String(department.id) : ''}
             onRefresh={onRefresh}
+            onOpenTicket={onOpenTicket}
           />
         ))}
       </div>

@@ -101,6 +101,40 @@ body {
   border-right: none;
 }
 
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.breadcrumb-sep {
+  color: #999;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: #3b5bdb;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.breadcrumb-current {
+  color: #333;
+  font-weight: 600;
+}
+
 /* Ticket card */
 .ticket {
   background: white;
@@ -111,10 +145,32 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
+.ticket-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
 .ticket-title {
   font-size: 13px;
-  display: block;
-  margin-bottom: 4px;
+  flex: 1;
+}
+
+.ticket-open-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ticket-open-btn:hover {
+  color: #3b5bdb;
 }
 
 .ticket-departments {
