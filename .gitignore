@@ -1,0 +1,10 @@
+# Rust
+backend/target
+
+# Database
+backend/data.db
+
+# React / Node
+frontend/node_modules
+frontend/dist
+

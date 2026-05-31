@@ -1,0 +1,207 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f0f2f5;
+  font-family: sans-serif;
+  color: #1a1a1a;
+}
+
+/* App shell */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  background: white;
+  border-bottom: 1px solid #ddd;
+  padding: 16px 24px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Main content area */
+.main {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+/* Board grid */
+.board {
+  min-width: 600px;
+}
+
+.board-column-headers {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.swimlane-label-spacer {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.board-column-header {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  padding: 8px;
+}
+
+/* Swimlane row */
+.swimlane {
+  display: flex;
+  border-top: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.swimlane-label {
+  width: 140px;
+  flex-shrink: 0;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  background: #fafafa;
+  border-right: 1px solid #ddd;
+  display: flex;
+  align-items: flex-start;
+}
+
+.swimlane-columns {
+  flex: 1;
+  display: flex;
+}
+
+/* Column cell */
+.column {
+  flex: 1;
+  padding: 10px;
+  border-right: 1px solid #eee;
+  min-height: 80px;
+}
+
+.column:last-child {
+  border-right: none;
+}
+
+/* Ticket card */
+.ticket {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.ticket-title {
+  font-size: 13px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ticket-departments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ticket-tag {
+  font-size: 10px;
+  background: #e8f0fe;
+  color: #3b5bdb;
+  border-radius: 3px;
+  padding: 2px 5px;
+}
+
+/* Add department form */
+.add-dept-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.add-dept-form input {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 200px;
+}
+
+.add-dept-form button {
+  padding: 6px 12px;
+  background: #3b5bdb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Add ticket form and button */
+.add-ticket-btn {
+  width: 100%;
+  padding: 4px;
+  background: none;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.add-ticket-btn:hover {
+  background: #f5f5f5;
+  color: #444;
+}
+
+.add-ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-ticket-form input,
+.add-ticket-form select {
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.add-ticket-form button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.add-ticket-form button[type="submit"] {
+  background: #3b5bdb;
+  color: white;
+}
+
+.add-ticket-form button[type="button"] {
+  background: #f0f0f0;
+  color: #444;
+}
