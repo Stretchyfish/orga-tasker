@@ -12,6 +12,7 @@ function App() {
   const [swimlaneTags, setSwimlaneTags] = useState([])
   const [showUntagged, setShowUntagged] = useState(true)
   const [boardStack, setBoardStack] = useState([{ id: 1, label: 'Main Board' }])
+  const [viewMode, setViewMode] = useState('kanban')
 
   const currentBoardId = boardStack[boardStack.length - 1].id
 
@@ -40,6 +41,7 @@ function App() {
               columnId: col.id,
               columnName: col.name,
               tags: ticket.tags.map(t => t.name),
+              start_date: ticket.start_date,
               due_date: ticket.due_date,
             }))
           )
@@ -157,6 +159,7 @@ function App() {
       label: ticketTitle,
       ticketId,
       description: currentTicket?.description || '',
+      start_date: currentTicket?.start_date,
       due_date: currentTicket?.due_date,
       tags: currentTicket?.tags || [],
     }])
@@ -193,6 +196,23 @@ function App() {
     )
   }
 
+  async function updateTicketStartDate(ticketId, start_date) {
+    await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ start_date }),
+    })
+    setTickets(prev =>
+      prev.map(t => t.id === ticketId ? { ...t, start_date } : t)
+    )
+    // Update boardStack if this is the current parent ticket
+    setBoardStack(prev =>
+      prev.map((item, idx) =>
+        item.ticketId === ticketId ? { ...item, start_date } : item
+      )
+    )
+  }
+
   function navigateTo(index) {
     setBoardStack(prev => prev.slice(0, index + 1))
   }
@@ -209,11 +229,13 @@ function App() {
           columns={columns}
           tickets={tickets}
           showUntagged={showUntagged}
+          viewMode={viewMode}
           onRefresh={() => loadData(currentBoardId)}
           onDeleteTicket={deleteTicket}
           onRenameTicket={renameTicket}
           onUpdateDescription={updateTicketDescription}
           onUpdateDate={updateTicketDate}
+          onUpdateStartDate={updateTicketStartDate}
           onDeleteTag={deleteTag}
           onRenameTag={renameTag}
           onAddTag={addTag}
@@ -223,6 +245,7 @@ function App() {
           onRemoveSwimlane={removeBoardSwimlane}
           onUpdateSwimlaneOrder={updateSwimlaneOrder}
           onToggleUntagged={() => setShowUntagged(s => !s)}
+          onToggleView={() => setViewMode(m => m === 'kanban' ? 'roadmap' : 'kanban')}
           onOpenTicket={openTicketBoard}
         />
       </main>

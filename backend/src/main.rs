@@ -33,6 +33,7 @@ struct TicketRow {
     id: i64,
     title: String,
     description: Option<String>,
+    start_date: Option<String>,
     due_date: Option<String>,
     position: i64,
 }
@@ -49,6 +50,7 @@ struct CreateTicket {
     column_id: i64,
     title: String,
     description: Option<String>,
+    start_date: Option<String>,
     due_date: Option<String>,
 }
 
@@ -67,6 +69,7 @@ struct UpdateTicket {
     column_id: Option<i64>,
     title: Option<String>,
     description: Option<String>,
+    start_date: Option<String>,
     due_date: Option<String>,
 }
 
@@ -98,6 +101,7 @@ struct TicketResponse {
     id: i64,
     title: String,
     description: Option<String>,
+    start_date: Option<String>,
     due_date: Option<String>,
     position: i64,
     tags: Vec<Tag>,
@@ -209,6 +213,7 @@ async fn init_db(pool: &sqlx::SqlitePool) {
             column_id   INTEGER NOT NULL REFERENCES columns(id),
             title       TEXT NOT NULL,
             description TEXT,
+            start_date  TEXT,
             due_date    TEXT,
             position    INTEGER NOT NULL DEFAULT 0
         )",
@@ -217,7 +222,10 @@ async fn init_db(pool: &sqlx::SqlitePool) {
     .await
     .expect("Failed to create tickets table");
 
-    // Add due_date column if it doesn't exist (for existing databases)
+    // Add columns if they don't exist (for existing databases)
+    let _ = sqlx::query("ALTER TABLE tickets ADD COLUMN start_date TEXT")
+        .execute(pool)
+        .await;
     let _ = sqlx::query("ALTER TABLE tickets ADD COLUMN due_date TEXT")
         .execute(pool)
         .await;
@@ -438,7 +446,7 @@ async fn get_board(
     let mut columns = Vec::new();
     for col in column_rows {
         let ticket_rows: Vec<TicketRow> = sqlx::query_as(
-            "SELECT id, title, description, due_date, position
+            "SELECT id, title, description, start_date, due_date, position
              FROM tickets WHERE column_id = ? ORDER BY position",
         )
         .bind(col.id)
@@ -462,6 +470,7 @@ async fn get_board(
                 id: ticket.id,
                 title: ticket.title,
                 description: ticket.description,
+                start_date: ticket.start_date,
                 due_date: ticket.due_date,
                 position: ticket.position,
                 tags,
@@ -496,11 +505,12 @@ async fn create_ticket(
             .expect("Failed to count tickets");
 
     let id: i64 = sqlx::query_scalar(
-        "INSERT INTO tickets (column_id, title, description, due_date, position) VALUES (?, ?, ?, ?, ?) RETURNING id",
+        "INSERT INTO tickets (column_id, title, description, start_date, due_date, position) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
     )
     .bind(body.column_id)
     .bind(&body.title)
     .bind(&body.description)
+    .bind(&body.start_date)
     .bind(&body.due_date)
     .bind(position)
     .fetch_one(&pool)
@@ -513,6 +523,7 @@ async fn create_ticket(
             id,
             title: body.title,
             description: body.description,
+            start_date: body.start_date,
             due_date: body.due_date,
             position,
             tags: vec![],
@@ -552,6 +563,15 @@ async fn update_ticket(
             .expect("Failed to update ticket description");
     }
 
+    if let Some(ref start_date) = body.start_date {
+        sqlx::query("UPDATE tickets SET start_date = ? WHERE id = ?")
+            .bind(start_date)
+            .bind(ticket_id)
+            .execute(&pool)
+            .await
+            .expect("Failed to update ticket start_date");
+    }
+
     if let Some(ref due_date) = body.due_date {
         sqlx::query("UPDATE tickets SET due_date = ? WHERE id = ?")
             .bind(due_date)
@@ -562,7 +582,7 @@ async fn update_ticket(
     }
 
     let ticket: Option<TicketRow> =
-        sqlx::query_as("SELECT id, title, description, due_date, position FROM tickets WHERE id = ?")
+        sqlx::query_as("SELECT id, title, description, start_date, due_date, position FROM tickets WHERE id = ?")
             .bind(ticket_id)
             .fetch_optional(&pool)
             .await
@@ -587,6 +607,7 @@ async fn update_ticket(
         id: ticket.id,
         title: ticket.title,
         description: ticket.description,
+        start_date: ticket.start_date,
         due_date: ticket.due_date,
         position: ticket.position,
         tags,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Swimlane from './Swimlane'
 import AddTagForm from './AddTagForm'
 import SwimlaneSelector from './SwimlaneSelector'
+import RoadmapView from './RoadmapView'
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -34,11 +35,13 @@ function formatDateInput(dateString) {
   return dateString
 }
 
-function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onOpenTicket }) {
+function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, viewMode, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onUpdateStartDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onToggleView, onOpenTicket }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDesc, setEditingDesc] = useState(false)
   const [descDraft, setDescDraft] = useState('')
+  const [editingStartDate, setEditingStartDate] = useState(false)
+  const [startDateDraft, setStartDateDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
   const [dateDraft, setDateDraft] = useState('')
   const [showTagDropdown, setShowTagDropdown] = useState(false)
@@ -78,6 +81,23 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
 
   function handleDescKeyDown(e) {
     if (e.key === 'Escape') setEditingDesc(false)
+  }
+
+  function startEditingStartDate() {
+    setStartDateDraft(parentTicket.start_date || '')
+    setEditingStartDate(true)
+  }
+
+  async function saveStartDate() {
+    const date = startDateDraft
+    if (date !== (parentTicket.start_date || '')) {
+      await onUpdateStartDate(parentTicket.ticketId, date || null)
+    }
+    setEditingStartDate(false)
+  }
+
+  function handleStartDateKeyDown(e) {
+    if (e.key === 'Escape') setEditingStartDate(false)
   }
 
   function startEditingDate() {
@@ -174,31 +194,62 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             )}
           </div>
           <div className="parent-ticket-date-section">
-            {editingDate ? (
-              <div className="parent-ticket-date-edit">
-                <input
-                  type="date"
-                  className="parent-ticket-date-input"
-                  value={dateDraft}
-                  onChange={e => setDateDraft(e.target.value)}
-                  onBlur={saveDate}
-                  onKeyDown={handleDateKeyDown}
-                  autoFocus
-                />
-                <div className="parent-ticket-date-actions">
-                  <button className="date-save-btn" onClick={saveDate}>Save</button>
-                  <button className="date-cancel-btn" onClick={() => setEditingDate(false)}>Cancel</button>
+            <div className="parent-ticket-date-subsection">
+              <p className="parent-ticket-date-label">Start:</p>
+              {editingStartDate ? (
+                <div className="parent-ticket-date-edit">
+                  <input
+                    type="date"
+                    className="parent-ticket-date-input"
+                    value={startDateDraft}
+                    onChange={e => setStartDateDraft(e.target.value)}
+                    onBlur={saveStartDate}
+                    onKeyDown={handleStartDateKeyDown}
+                    autoFocus
+                  />
+                  <div className="parent-ticket-date-actions">
+                    <button className="date-save-btn" onClick={saveStartDate}>Save</button>
+                    <button className="date-cancel-btn" onClick={() => setEditingStartDate(false)}>Cancel</button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="parent-ticket-date-container" onClick={startEditingDate}>
-                {parentTicket.due_date ? (
-                  <p className="parent-ticket-date">{formatDate(parentTicket.due_date)}</p>
-                ) : (
-                  <p className="parent-ticket-date-placeholder">Click to add a date</p>
-                )}
-              </div>
-            )}
+              ) : (
+                <div className="parent-ticket-date-container" onClick={startEditingStartDate}>
+                  {parentTicket.start_date ? (
+                    <p className="parent-ticket-date">{formatDate(parentTicket.start_date)}</p>
+                  ) : (
+                    <p className="parent-ticket-date-placeholder">Click to add</p>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="parent-ticket-date-subsection">
+              <p className="parent-ticket-date-label">Due:</p>
+              {editingDate ? (
+                <div className="parent-ticket-date-edit">
+                  <input
+                    type="date"
+                    className="parent-ticket-date-input"
+                    value={dateDraft}
+                    onChange={e => setDateDraft(e.target.value)}
+                    onBlur={saveDate}
+                    onKeyDown={handleDateKeyDown}
+                    autoFocus
+                  />
+                  <div className="parent-ticket-date-actions">
+                    <button className="date-save-btn" onClick={saveDate}>Save</button>
+                    <button className="date-cancel-btn" onClick={() => setEditingDate(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="parent-ticket-date-container" onClick={startEditingDate}>
+                  {parentTicket.due_date ? (
+                    <p className="parent-ticket-date">{formatDate(parentTicket.due_date)}</p>
+                  ) : (
+                    <p className="parent-ticket-date-placeholder">Click to add</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="parent-ticket-tags-section">
             <div className="parent-ticket-tags">
@@ -265,64 +316,84 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
         </label>
       </div>
 
-      <div className="board-column-headers">
-        <div className="swimlane-label-spacer" />
-        {columns.map(col => (
-          <div key={col.id} className="board-column-header">{col.name}</div>
-        ))}
+      <div className="view-toggle-container">
+        <button className="view-toggle-btn" onClick={onToggleView} title={`Switch to ${viewMode === 'kanban' ? 'roadmap' : 'kanban'} view`}>
+          {viewMode === 'kanban' ? '📅 Roadmap' : '📊 Kanban'}
+        </button>
       </div>
 
-      {swimlaneTags.map((tag, index) => (
-        <Swimlane
-          key={tag.id}
-          tag={tag}
-          swimlaneIndex={index}
-          columns={columns}
-          tickets={tickets.filter(t => t.tags.includes(tag.name))}
-          allTags={allTags}
-          ticketProgress={ticketProgress}
-          onRefresh={onRefresh}
-          onDeleteTicket={onDeleteTicket}
-          onRenameTicket={onRenameTicket}
-          onUpdateDate={onUpdateDate}
-          onDeleteTag={onDeleteTag}
-          onRenameTag={onRenameTag}
-          onAddTag={onAddTag}
-          onRemoveTag={onRemoveTag}
-          onMoveTicket={onMoveTicket}
-          onRemoveSwimlane={onRemoveSwimlane}
-          onOpenTicket={onOpenTicket}
-          draggedSwimlaneId={draggedSwimlaneId}
-          onDragSwimlane={setDraggedSwimlaneId}
-          onDropSwimlane={(sourceIndex, destIndex) => {
-            if (sourceIndex === destIndex) return
-            const newOrder = [...swimlaneTags]
-            const [movedTag] = newOrder.splice(sourceIndex, 1)
-            newOrder.splice(destIndex, 0, movedTag)
-            const swimlaneOrders = newOrder.map((t, idx) => [t.id, idx])
-            onUpdateSwimlaneOrder(swimlaneOrders)
-          }}
-        />
-      ))}
+      {viewMode === 'kanban' ? (
+        <>
+          <div className="board-column-headers">
+            <div className="swimlane-label-spacer" />
+            {columns.map(col => (
+              <div key={col.id} className="board-column-header">{col.name}</div>
+            ))}
+          </div>
 
-      {showUntagged && (
-        <Swimlane
-          key="__untagged__"
-          tag={null}
-          columns={columns}
-          tickets={untagged}
+          {swimlaneTags.map((tag, index) => (
+            <Swimlane
+              key={tag.id}
+              tag={tag}
+              swimlaneIndex={index}
+              columns={columns}
+              tickets={tickets.filter(t => t.tags.includes(tag.name))}
+              allTags={allTags}
+              ticketProgress={ticketProgress}
+              onRefresh={onRefresh}
+              onDeleteTicket={onDeleteTicket}
+              onRenameTicket={onRenameTicket}
+              onUpdateDate={onUpdateDate}
+              onDeleteTag={onDeleteTag}
+              onRenameTag={onRenameTag}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onMoveTicket={onMoveTicket}
+              onRemoveSwimlane={onRemoveSwimlane}
+              onOpenTicket={onOpenTicket}
+              draggedSwimlaneId={draggedSwimlaneId}
+              onDragSwimlane={setDraggedSwimlaneId}
+              onDropSwimlane={(sourceIndex, destIndex) => {
+                if (sourceIndex === destIndex) return
+                const newOrder = [...swimlaneTags]
+                const [movedTag] = newOrder.splice(sourceIndex, 1)
+                newOrder.splice(destIndex, 0, movedTag)
+                const swimlaneOrders = newOrder.map((t, idx) => [t.id, idx])
+                onUpdateSwimlaneOrder(swimlaneOrders)
+              }}
+            />
+          ))}
+
+          {showUntagged && (
+            <Swimlane
+              key="__untagged__"
+              tag={null}
+              columns={columns}
+              tickets={untagged}
+              allTags={allTags}
+              ticketProgress={ticketProgress}
+              onRefresh={onRefresh}
+              onDeleteTicket={onDeleteTicket}
+              onRenameTicket={onRenameTicket}
+              onUpdateDate={onUpdateDate}
+              onDeleteTag={onDeleteTag}
+              onRenameTag={onRenameTag}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onMoveTicket={onMoveTicket}
+              onOpenTicket={onOpenTicket}
+            />
+          )}
+        </>
+      ) : (
+        <RoadmapView
+          swimlaneTags={swimlaneTags}
+          tickets={tickets}
           allTags={allTags}
-          ticketProgress={ticketProgress}
-          onRefresh={onRefresh}
-          onDeleteTicket={onDeleteTicket}
-          onRenameTicket={onRenameTicket}
+          showUntagged={showUntagged}
+          onUpdateStartDate={onUpdateStartDate}
           onUpdateDate={onUpdateDate}
-          onDeleteTag={onDeleteTag}
-          onRenameTag={onRenameTag}
-          onAddTag={onAddTag}
-          onRemoveTag={onRemoveTag}
-          onMoveTicket={onMoveTicket}
-          onOpenTicket={onOpenTicket}
+          onRenameTicket={onRenameTicket}
         />
       )}
     </div>
