@@ -200,11 +200,6 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, ticketProgr
   return (
     <div className="roadmap-view">
       <div className="roadmap-swimlane-column">
-        <div className="roadmap-toggle-container">
-          <button className="view-toggle-btn" onClick={onToggleView} title="Switch to kanban view">
-            📊 Kanban
-          </button>
-        </div>
         {swimlaneTickets.map((s) => (
           <div key={s.tag?.id || '__untagged__'} className="roadmap-swimlane-label">
             {s.tag ? s.tag.name : 'Untagged'}

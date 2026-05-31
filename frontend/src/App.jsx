@@ -14,6 +14,17 @@ function App() {
   const [boardStack, setBoardStack] = useState([{ id: 1, label: 'Main Board' }])
   const [viewMode, setViewMode] = useState('kanban')
 
+  function setView(mode) {
+    setViewMode(mode)
+  }
+
+  function toggleViewMode() {
+    const modes = ['kanban', 'roadmap', 'calendar']
+    const currentIndex = modes.indexOf(viewMode)
+    const nextIndex = (currentIndex + 1) % modes.length
+    setViewMode(modes[nextIndex])
+  }
+
   const currentBoardId = boardStack[boardStack.length - 1].id
 
   const loadData = useCallback((boardId) => {
@@ -245,7 +256,8 @@ function App() {
           onRemoveSwimlane={removeBoardSwimlane}
           onUpdateSwimlaneOrder={updateSwimlaneOrder}
           onToggleUntagged={() => setShowUntagged(s => !s)}
-          onToggleView={() => setViewMode(m => m === 'kanban' ? 'roadmap' : 'kanban')}
+          onSetView={setView}
+          onToggleView={toggleViewMode}
           onOpenTicket={openTicketBoard}
         />
       </main>

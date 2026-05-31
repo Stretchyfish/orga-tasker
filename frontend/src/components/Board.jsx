@@ -3,6 +3,7 @@ import Swimlane from './Swimlane'
 import AddTagForm from './AddTagForm'
 import SwimlaneSelector from './SwimlaneSelector'
 import RoadmapView from './RoadmapView'
+import CalendarView from './CalendarView'
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -35,7 +36,7 @@ function formatDateInput(dateString) {
   return dateString
 }
 
-function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, viewMode, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onUpdateStartDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onToggleView, onOpenTicket }) {
+function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, viewMode, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onUpdateStartDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onSetView, onToggleView, onOpenTicket }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDesc, setEditingDesc] = useState(false)
@@ -316,12 +317,30 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
         </label>
       </div>
 
+      <div className="view-tabs">
+        <button
+          className={`view-tab ${viewMode === 'kanban' ? 'active' : ''}`}
+          onClick={() => onSetView('kanban')}
+        >
+          📊 Kanban
+        </button>
+        <button
+          className={`view-tab ${viewMode === 'roadmap' ? 'active' : ''}`}
+          onClick={() => onSetView('roadmap')}
+        >
+          📅 Roadmap
+        </button>
+        <button
+          className={`view-tab ${viewMode === 'calendar' ? 'active' : ''}`}
+          onClick={() => onSetView('calendar')}
+        >
+          📆 Calendar
+        </button>
+      </div>
+
       {viewMode === 'kanban' ? (
         <div className="board-grid-layout">
           <div className="board-grid-top-left">
-            <button className="view-toggle-btn" onClick={onToggleView} title="Switch to roadmap view">
-              📅 Roadmap
-            </button>
           </div>
 
           <div className="board-column-headers">
@@ -386,8 +405,21 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             )}
           </div>
         </div>
-      ) : (
+      ) : viewMode === 'roadmap' ? (
         <RoadmapView
+          swimlaneTags={swimlaneTags}
+          tickets={tickets}
+          allTags={allTags}
+          showUntagged={showUntagged}
+          ticketProgress={ticketProgress}
+          onUpdateStartDate={onUpdateStartDate}
+          onUpdateDate={onUpdateDate}
+          onRenameTicket={onRenameTicket}
+          onToggleView={onToggleView}
+          onOpenTicket={onOpenTicket}
+        />
+      ) : (
+        <CalendarView
           swimlaneTags={swimlaneTags}
           tickets={tickets}
           allTags={allTags}
