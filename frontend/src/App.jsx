@@ -64,6 +64,20 @@ function App() {
     loadData(currentBoardId)
   }, [loadData, currentBoardId])
 
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state && event.state.boardStack) {
+        setBoardStack(event.state.boardStack)
+      } else {
+        // Back to main board
+        setBoardStack([{ id: 1, label: 'Main Board' }])
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   async function renameCompany(name) {
     await fetch('http://localhost:3000/company', {
       method: 'PATCH',
@@ -165,7 +179,7 @@ function App() {
     const res = await fetch(`http://localhost:3000/tickets/${ticketId}/board`)
     const board = await res.json()
     const currentTicket = tickets.find(t => t.id === ticketId)
-    setBoardStack(prev => [...prev, {
+    const newBoardStack = [...boardStack, {
       id: board.id,
       label: ticketTitle,
       ticketId,
@@ -173,7 +187,9 @@ function App() {
       start_date: currentTicket?.start_date,
       due_date: currentTicket?.due_date,
       tags: currentTicket?.tags || [],
-    }])
+    }]
+    setBoardStack(newBoardStack)
+    window.history.pushState({ boardStack: newBoardStack }, ticketTitle)
   }
 
   async function updateTicketDescription(ticketId, description) {
@@ -225,7 +241,10 @@ function App() {
   }
 
   function navigateTo(index) {
-    setBoardStack(prev => prev.slice(0, index + 1))
+    const newStack = boardStack.slice(0, index + 1)
+    setBoardStack(newStack)
+    const state = index === 0 ? null : { boardStack: newStack }
+    window.history.pushState(state, '')
   }
 
   return (
