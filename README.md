@@ -4,6 +4,8 @@ An exploratory project to try out Claude Code.
 
 A task management application that enables tracking projects and tasks at as many levels as needed. Work can be organized by custom tags, visualized in multiple formats (Kanban, Roadmap, Calendar), and decomposed into nested hierarchies.
 
+![Example of the task panel interface](media/example_panel.png)
+
 ## Features
 
 - **Kanban Board** - Organize tasks in columns with customizable swimlanes
