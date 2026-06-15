@@ -92,6 +92,16 @@ body {
   border-bottom: 2px solid #e5e7eb;
 }
 
+.parent-ticket-section-header {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #667eea;
+  letter-spacing: 0.06em;
+  display: block;
+}
+
 .parent-ticket-title-container {
   display: flex;
   align-items: center;
@@ -1230,14 +1240,25 @@ body {
 .parent-ticket-date-section {
   margin-top: 12px;
   display: flex;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 6px;
+  align-content: flex-start;
+}
+
+.parent-ticket-date-section h3 {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
+.parent-ticket-date-subsection {
+  flex: 0 0 auto;
+  gap: 8px;
 }
 
 .parent-ticket-date-subsection {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .parent-ticket-date-label {
@@ -1289,37 +1310,65 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-x: auto;
   background: white;
+  overflow: hidden;
 }
 
 .roadmap-timeline-header {
   flex-shrink: 0;
-  height: 50px;
+  height: 70px;
   border-bottom: 1px solid #e5e7eb;
-  overflow-x: auto;
   background: #f9fafb;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .roadmap-timeline-track {
   position: relative;
   display: flex;
-  height: 100%;
+  height: 50%;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.roadmap-week {
+.roadmap-timeline-track:last-child {
+  border-bottom: none;
+}
+
+.roadmap-years-track {
+  border-bottom: 1px solid #ddd;
+}
+
+.roadmap-months-track {
+}
+
+.roadmap-year {
   position: absolute;
   height: 100%;
-  border-right: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
+  border-right: 2px solid #667eea;
 }
 
-.roadmap-week-label {
+.roadmap-year-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #667eea;
+  white-space: nowrap;
+}
+
+.roadmap-month {
+  position: absolute;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #ccc;
+}
+
+.roadmap-month-label {
   font-size: 11px;
   font-weight: 600;
   color: #666;
@@ -1331,6 +1380,30 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+}
+
+.roadmap-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e8e8e8;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.roadmap-grid-line.year-line {
+  background: #667eea;
+  width: 2px;
+  opacity: 0.4;
+}
+
+.roadmap-grid-line.month-line {
+  background: #ccc;
+  width: 1px;
+  opacity: 0.6;
 }
 
 .roadmap-swimlane-row {
@@ -1761,6 +1834,27 @@ body {
   color: #2c3e50;
   flex: 1;
   word-break: break-word;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.ticket-panel-title:hover {
+  background-color: #f0f0f0;
+}
+
+.ticket-panel-title-input {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  flex: 1;
+  border: 2px solid #667eea;
+  border-radius: 4px;
+  padding: 4px 8px;
+  outline: none;
+  font-family: inherit;
 }
 
 .ticket-panel-close {
@@ -1800,12 +1894,15 @@ body {
 }
 
 .ticket-panel-section h3 {
-  margin: 0;
-  font-size: 12px;
+  margin: 0 0 8px 0;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   color: #667eea;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e0e7ff;
+  display: block;
 }
 
 .ticket-panel-progress {
@@ -1991,29 +2088,29 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   min-width: 0;
   background: #f9fafb;
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px;
   border: 1px solid #e5e7eb;
 }
 
 .ticket-panel-column-header {
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 700;
   text-transform: uppercase;
   color: #667eea;
-  padding: 4px 4px;
-  letter-spacing: 0.03em;
-  border-bottom: 2px solid #e0e7ff;
+  padding: 3px 3px;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid #e0e7ff;
   white-space: nowrap;
 }
 
 .ticket-panel-column-tickets {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   flex: 1;
   overflow-y: auto;
 }
@@ -2021,43 +2118,43 @@ body {
 .ticket-panel-ticket {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 5px;
-  padding: 8px;
-  font-size: 11px;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 9px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  gap: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .ticket-panel-ticket:hover {
   border-color: #667eea;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.12);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
 
 .ticket-panel-ticket-title {
   font-weight: 500;
   color: #2c3e50;
-  line-height: 1.35;
+  line-height: 1.2;
   word-break: break-word;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .ticket-panel-ticket-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: 2px;
 }
 
 .ticket-panel-ticket-tag {
-  font-size: 9px;
+  font-size: 7px;
   background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
   color: #667eea;
-  padding: 3px 6px;
-  border-radius: 3px;
+  padding: 2px 4px;
+  border-radius: 2px;
   font-weight: 600;
   white-space: nowrap;
   border: 1px solid #e0e7ff;
@@ -2086,4 +2183,27 @@ body {
   min-height: 200px;
   display: flex;
   flex-direction: column;
+}
+
+/* Today indicators */
+.roadmap-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ef4444;
+  z-index: 10;
+  opacity: 0.7;
+}
+
+.calendar-day.today .calendar-day-number {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
 }

@@ -31,7 +31,7 @@ function formatDateInput(dateString) {
   return dateString
 }
 
-function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
+function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onOpenBoard, onMove, onDelete, onRename, onUpdateDate, onAddTag, onRemoveTag }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
@@ -88,7 +88,7 @@ function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMov
   }
 
   return (
-    <div className="ticket" draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <div className="ticket" draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDoubleClick={() => onOpenBoard(ticket.id, ticket.title)}>
       <div className="ticket-header">
         {editing ? (
           <input
@@ -105,7 +105,6 @@ function Ticket({ ticket, swimlaneTag, columns, allTags, progress, onOpen, onMov
           </span>
         )}
         <div className="ticket-actions">
-          <button className="ticket-open-btn" onClick={startEditing} title="Rename ticket">✎</button>
           <button className="ticket-delete-btn" onClick={handleDelete} title="Delete ticket">✕</button>
         </div>
       </div>

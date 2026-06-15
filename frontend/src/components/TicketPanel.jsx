@@ -12,6 +12,8 @@ function formatDate(dateString) {
 function TicketPanel({ ticket, allTags, ticketProgress, onUpdateDate, onUpdateStartDate, onUpdateDescription, onRenameTicket, onAddTag, onRemoveTag, onOpenBoard, onClose }) {
   const [board, setBoard] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(ticket.title)
   const [editingDesc, setEditingDesc] = useState(false)
   const [descDraft, setDescDraft] = useState(ticket.description || '')
   const [editingStartDate, setEditingStartDate] = useState(false)
@@ -33,6 +35,24 @@ function TicketPanel({ ticket, allTags, ticketProgress, onUpdateDate, onUpdateSt
     }
     loadBoard()
   }, [ticket.id])
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && !editingTitle && !editingDesc && !editingStartDate && !editingDueDate) {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [editingTitle, editingDesc, editingStartDate, editingDueDate, onClose])
+
+  async function saveTitle() {
+    const title = titleDraft.trim()
+    if (title && title !== ticket.title) {
+      await onRenameTicket(ticket.id, title)
+    }
+    setEditingTitle(false)
+  }
 
   async function saveDesc() {
     const desc = descDraft.trim()
@@ -59,7 +79,23 @@ function TicketPanel({ ticket, allTags, ticketProgress, onUpdateDate, onUpdateSt
   return (
     <div className="ticket-panel">
       <div className="ticket-panel-header">
-        <h2 className="ticket-panel-title">{ticket.title}</h2>
+        {editingTitle ? (
+          <input
+            className="ticket-panel-title-input"
+            value={titleDraft}
+            onChange={e => setTitleDraft(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveTitle()
+              if (e.key === 'Escape') setEditingTitle(false)
+            }}
+            autoFocus
+          />
+        ) : (
+          <h2 className="ticket-panel-title" onClick={() => setEditingTitle(true)}>
+            {ticket.title}
+          </h2>
+        )}
         <button className="ticket-panel-close" onClick={onClose}>✕</button>
       </div>
 

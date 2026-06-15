@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Column from './Column'
 
-function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onRemoveSwimlane, onOpenTicket, draggedSwimlaneId, onDragSwimlane, onDropSwimlane }) {
+function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onRemoveSwimlane, onOpenTicket, onOpenBoard, draggedSwimlaneId, onDragSwimlane, onDropSwimlane }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [dragOverSwimlane, setDragOverSwimlane] = useState(false)
@@ -113,6 +113,7 @@ function Swimlane({ tag, swimlaneIndex, columns, tickets, allTags, ticketProgres
             onRemoveTag={onRemoveTag}
             onMoveTicket={onMoveTicket}
             onOpenTicket={onOpenTicket}
+            onOpenBoard={onOpenBoard}
           />
         ))}
       </div>

@@ -36,7 +36,7 @@ function formatDateInput(dateString) {
   return dateString
 }
 
-function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, viewMode, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onUpdateStartDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onSetView, onToggleView, onOpenTicket }) {
+function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUntagged, viewMode, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDescription, onUpdateDate, onUpdateStartDate, onDeleteTag, onRenameTag, onAddTag, onRemoveTag, onMoveTicket, onAddSwimlane, onRemoveSwimlane, onUpdateSwimlaneOrder, onToggleUntagged, onSetView, onToggleView, onOpenTicket, onOpenBoard }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [editingDesc, setEditingDesc] = useState(false)
@@ -169,6 +169,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             </div>
           )}
           <div className="parent-ticket-description-section">
+            <h3 className="parent-ticket-section-header">Description</h3>
             {editingDesc ? (
               <div className="parent-ticket-description-edit">
                 <textarea
@@ -195,6 +196,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             )}
           </div>
           <div className="parent-ticket-date-section">
+            <h3 className="parent-ticket-section-header">Dates</h3>
             <div className="parent-ticket-date-subsection">
               <p className="parent-ticket-date-label">Start:</p>
               {editingStartDate ? (
@@ -253,6 +255,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
             </div>
           </div>
           <div className="parent-ticket-tags-section">
+            <h3 className="parent-ticket-section-header">Tags</h3>
             <div className="parent-ticket-tags">
               {(parentTicket.tags || []).map(tagName => {
                 const tag = allTags.find(t => t.name === tagName)
@@ -370,6 +373,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
               onMoveTicket={onMoveTicket}
               onRemoveSwimlane={onRemoveSwimlane}
               onOpenTicket={onOpenTicket}
+              onOpenBoard={onOpenBoard}
               draggedSwimlaneId={draggedSwimlaneId}
               onDragSwimlane={setDraggedSwimlaneId}
               onDropSwimlane={(sourceIndex, destIndex) => {
@@ -394,6 +398,7 @@ function Board({ parentTicket, allTags, swimlaneTags, columns, tickets, showUnta
                 onRefresh={onRefresh}
                 onDeleteTicket={onDeleteTicket}
                 onRenameTicket={onRenameTicket}
+                onOpenBoard={onOpenBoard}
                 onUpdateDate={onUpdateDate}
                 onDeleteTag={onDeleteTag}
                 onRenameTag={onRenameTag}

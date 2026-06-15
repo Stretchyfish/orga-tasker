@@ -51,6 +51,7 @@ function App() {
             col.tickets.map(ticket => ({
               id: ticket.id,
               title: ticket.title,
+              description: ticket.description,
               columnId: col.id,
               columnName: col.name,
               tags: ticket.tags.map(t => t.name),
@@ -198,6 +199,7 @@ function App() {
       tags: currentTicket?.tags || [],
     }]
     setBoardStack(newBoardStack)
+    setSelectedTicket(null)
     window.history.pushState({ boardStack: newBoardStack }, ticketTitle)
   }
 
@@ -207,6 +209,12 @@ function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ description }),
     })
+    // Update the tickets array
+    setTickets(prev =>
+      prev.map(t => t.id === ticketId ? { ...t, description } : t)
+    )
+    // Update the selected ticket
+    setSelectedTicket(prev => prev ? { ...prev, description } : null)
     // Update the boardStack with the new description
     setBoardStack(prev =>
       prev.map((item, idx) =>
@@ -288,6 +296,7 @@ function App() {
             onSetView={setView}
             onToggleView={toggleViewMode}
             onOpenTicket={openTicketPanel}
+            onOpenBoard={openTicketBoard}
           />
           {selectedTicket && (
             <TicketPanel

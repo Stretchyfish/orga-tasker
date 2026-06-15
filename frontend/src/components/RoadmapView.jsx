@@ -45,31 +45,84 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, ticketProgr
   maxDate.setDate(maxDate.getDate() + 7)
 
   const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24))
+
+  // Calculate today's position in the timeline
+  let todayPercent = null
+  if (minDate <= today && today <= maxDate) {
+    const daysFromStart = Math.ceil((today - minDate) / (1000 * 60 * 60 * 24))
+    todayPercent = (daysFromStart / totalDays) * 100
+  }
   const timelineWidth = Math.max(1200, totalDays * 2) // at least 2px per day
 
-  // Generate timeline headers (weekly)
-  const weeks = []
-  let currentWeek = new Date(minDate)
-  currentWeek.setDate(currentWeek.getDate() - currentWeek.getDay())
+  // Generate timeline headers (years and months with boundaries)
+  const years = []
+  const months = []
+  const gridLines = []
 
-  while (currentWeek < maxDate) {
-    const weekStart = new Date(currentWeek)
-    const weekEnd = new Date(currentWeek)
-    weekEnd.setDate(weekEnd.getDate() + 6)
-    const daysFromStart = Math.ceil((weekStart - minDate) / (1000 * 60 * 60 * 24))
-    const widthDays = Math.min(7, (maxDate - weekStart) / (1000 * 60 * 60 * 24))
-    const width = (widthDays / totalDays) * 100
+  // First pass: collect all year and month data
+  const yearData = {}
+  const monthData = {}
 
-    weeks.push({
-      start: weekStart,
-      end: weekEnd,
-      label: `${weekStart.getDate()}/${weekStart.getMonth() + 1}`,
-      leftPercent: (daysFromStart / totalDays) * 100,
-      widthPercent: width,
-    })
+  let currentDay = new Date(minDate)
+  let dayCount = 0
+  let lastYear = -1
+  let lastMonth = -1
+  let lastMonthYear = -1
 
-    currentWeek.setDate(currentWeek.getDate() + 7)
+  while (currentDay < maxDate) {
+    const currentYear = currentDay.getFullYear()
+    const currentMonth = currentDay.getMonth()
+    const monthKey = `${currentYear}-${currentMonth}`
+    const percent = (dayCount / totalDays) * 100
+
+    // Track year
+    if (currentYear !== lastYear) {
+      if (lastYear !== -1) {
+        yearData[lastYear].endPercent = percent
+      }
+      yearData[currentYear] = { startPercent: percent, year: currentYear }
+      lastYear = currentYear
+    }
+
+    // Track month
+    if (currentMonth !== lastMonth || currentYear !== lastMonthYear) {
+      if (lastMonth !== -1) {
+        const lastMonthKey = `${lastMonthYear}-${lastMonth}`
+        monthData[lastMonthKey].endPercent = percent
+      }
+      monthData[monthKey] = {
+        startPercent: percent,
+        month: currentDay.toLocaleDateString('en-US', { month: 'short' }),
+      }
+      lastMonth = currentMonth
+      lastMonthYear = currentYear
+    }
+
+    currentDay.setDate(currentDay.getDate() + 1)
+    dayCount++
   }
+
+  // Finalize last year and month
+  if (lastYear !== -1) {
+    yearData[lastYear].endPercent = 100
+  }
+  if (lastMonth !== -1) {
+    const lastMonthKey = `${lastMonthYear}-${lastMonth}`
+    monthData[lastMonthKey].endPercent = 100
+  }
+
+  // Convert to arrays and add grid lines
+  Object.values(yearData).forEach(y => {
+    years.push(y)
+    gridLines.push({ percent: y.startPercent, isYear: true })
+  })
+  gridLines.push({ percent: 100, isYear: true })
+
+  Object.values(monthData).forEach(m => {
+    months.push(m)
+    gridLines.push({ percent: m.startPercent, isMonth: true })
+  })
+  gridLines.push({ percent: 100, isMonth: true })
 
   function getBarPosition(startDate, dueDate) {
     const start = startDate ? new Date(startDate) : today
@@ -83,6 +136,30 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, ticketProgr
       widthPercent: Math.max(1, (barDays / totalDays) * 100),
     }
   }
+
+  const [headerRef, setHeaderRef] = useState(null)
+  const [rowsRef, setRowsRef] = useState(null)
+
+  // Sync scroll positions between header and rows
+  useEffect(() => {
+    const syncScroll = (source, target) => {
+      if (target) {
+        target.scrollLeft = source.scrollLeft
+      }
+    }
+
+    if (headerRef) {
+      headerRef.addEventListener('scroll', () => syncScroll(headerRef, rowsRef))
+    }
+    if (rowsRef) {
+      rowsRef.addEventListener('scroll', () => syncScroll(rowsRef, headerRef))
+    }
+
+    return () => {
+      if (headerRef) headerRef.removeEventListener('scroll', () => syncScroll(headerRef, rowsRef))
+      if (rowsRef) rowsRef.removeEventListener('scroll', () => syncScroll(rowsRef, headerRef))
+    }
+  }, [headerRef, rowsRef])
 
   useEffect(() => {
     if (draggingBar) {
@@ -211,24 +288,60 @@ function RoadmapView({ swimlaneTags, tickets, allTags, showUntagged, ticketProgr
       </div>
 
       <div className="roadmap-timeline-container">
-        <div className="roadmap-timeline-header">
-          <div className="roadmap-timeline-track" style={{ width: `${timelineWidth}px` }}>
-            {weeks.map((week, idx) => (
+        <div className="roadmap-timeline-header" ref={setHeaderRef}>
+          {/* Years row */}
+          <div className="roadmap-timeline-track roadmap-years-track" style={{ width: `${timelineWidth}px` }}>
+            {years.map((year, idx) => (
               <div
                 key={idx}
-                className="roadmap-week"
+                className="roadmap-year"
                 style={{
-                  left: `${week.leftPercent}%`,
-                  width: `${week.widthPercent}%`,
+                  left: `${year.startPercent}%`,
+                  right: `${100 - year.endPercent}%`,
                 }}
               >
-                <span className="roadmap-week-label">{week.label}</span>
+                <span className="roadmap-year-label">{year.year}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Months row */}
+          <div className="roadmap-timeline-track roadmap-months-track" style={{ width: `${timelineWidth}px` }}>
+            {months.map((month, idx) => (
+              <div
+                key={idx}
+                className="roadmap-month"
+                style={{
+                  left: `${month.startPercent}%`,
+                  right: `${100 - month.endPercent}%`,
+                }}
+              >
+                <span className="roadmap-month-label">{month.month}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="roadmap-timeline-rows">
+        <div className="roadmap-timeline-rows" ref={setRowsRef}>
+          {/* Year and month boundary lines */}
+          {gridLines.map((line, idx) => (
+            <div
+              key={`grid-${idx}`}
+              className={`roadmap-grid-line ${line.isYear ? 'year-line' : line.isMonth ? 'month-line' : ''}`}
+              style={{
+                left: `${line.percent}%`,
+              }}
+            />
+          ))}
+
+          {todayPercent !== null && (
+            <div
+              className="roadmap-today-line"
+              style={{
+                left: `${todayPercent}%`,
+              }}
+            />
+          )}
           {swimlaneTickets.map((s) => (
             <div key={s.tag?.id || '__untagged__'} className="roadmap-swimlane-row">
               <div className="roadmap-timeline-track" style={{ width: `${timelineWidth}px` }}>

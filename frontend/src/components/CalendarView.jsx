@@ -198,8 +198,10 @@ function CalendarView({ swimlaneTags, tickets, allTags, showUntagged, ticketProg
                     return <div key={`empty-${dayIdx}`} className="calendar-day empty" />
                   }
 
+                  const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+
                   return (
-                    <div key={day} className="calendar-day">
+                    <div key={day} className={`calendar-day ${isToday ? 'today' : ''}`}>
                       <div className="calendar-day-number">{day}</div>
                     </div>
                   )

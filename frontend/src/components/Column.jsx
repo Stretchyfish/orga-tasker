@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Ticket from './Ticket'
 import AddTicketForm from './AddTicketForm'
 
-function Column({ column, columns, swimlaneTag, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket }) {
+function Column({ column, columns, swimlaneTag, tickets, allTags, ticketProgress, onRefresh, onDeleteTicket, onRenameTicket, onUpdateDate, onAddTag, onRemoveTag, onMoveTicket, onOpenTicket, onOpenBoard }) {
   const [adding, setAdding] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
@@ -65,6 +65,7 @@ function Column({ column, columns, swimlaneTag, tickets, allTags, ticketProgress
           onRemoveTag={onRemoveTag}
           onMove={onMoveTicket}
           onOpen={onOpenTicket}
+          onOpenBoard={onOpenBoard}
         />
       ))}
       {adding
