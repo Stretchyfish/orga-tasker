@@ -1,5 +1,6 @@
 # Rust
 backend/target
+/target
 
 # Database
 backend/data.db
